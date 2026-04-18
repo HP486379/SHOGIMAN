@@ -69,8 +69,11 @@ function App() {
   return (
     <main className="screen">
       <header className="hud top-hud">
-        <span>1P VS CPU</span>
-        <span>BLAST: {blastType ?? '---'}</span>
+        <div className="hud-block">1P</div>
+        <div className="hud-block vs-block">VS</div>
+        <div className="hud-block">CPU</div>
+        <div className="hud-block">TURN 1P</div>
+        <div className="hud-block">BLAST {blastType ?? '---'}</div>
       </header>
 
       <section className="playfield">
@@ -84,8 +87,8 @@ function App() {
       </section>
 
       <footer className="hud bottom-hud">
-        <span>{footerMessage}</span>
-        <span>SELECT PIECE / BLAST RANGE / SELECT DEST</span>
+        <div className="bottom-left">▶ {footerMessage}</div>
+        <div className="bottom-center">SELECT PIECE / BLAST RANGE / SELECT DEST</div>
         <button type="button" className="retro-button" onClick={resetGame}>
           RESET
         </button>

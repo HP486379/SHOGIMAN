@@ -1,7 +1,7 @@
 :root {
   font-family: 'MS Gothic', 'Courier New', monospace;
   color: #f8f8f8;
-  background: #0a1a64;
+  background: #07185e;
 }
 
 * {
@@ -12,7 +12,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: #0a1a64;
+  background: #07185e;
 }
 
 #root {
@@ -23,123 +23,132 @@ body {
   min-height: 100vh;
   display: grid;
   grid-template-rows: auto 1fr auto;
-  gap: 12px;
-  padding: 12px;
-  max-width: 980px;
+  gap: 6px;
+  padding: 6px;
+  max-width: 920px;
   margin: 0 auto;
 }
 
 .hud {
-  border: 4px solid #f8f8f8;
-  box-shadow: inset 0 0 0 4px #f5d95c;
-  background: #1a2b8a;
+  border: 4px solid #ffffff;
+  box-shadow: inset 0 0 0 4px #f2d95d;
+  background: #11288d;
   color: #f8f8f8;
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 14px;
-  letter-spacing: 1px;
+  padding: 4px 6px;
 }
 
 .top-hud {
-  text-transform: uppercase;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
 }
 
-.bottom-hud {
-  font-size: 12px;
+.hud-block {
+  border: 2px solid #f8f8f8;
+  box-shadow: inset 0 0 0 2px #f2d95d;
+  background: #0b1f74;
+  padding: 4px;
+  text-align: center;
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+
+.vs-block {
+  color: #ffb23f;
+  font-size: 18px;
+  font-weight: 700;
 }
 
 .playfield {
-  border: 4px solid #f8f8f8;
-  box-shadow: inset 0 0 0 4px #f5d95c;
-  background: #132476;
+  border: 4px solid #ffffff;
+  box-shadow: inset 0 0 0 4px #f2d95d;
+  background: #0e247e;
   display: grid;
   place-items: center;
-  padding: 10px;
+  padding: 4px;
 }
 
 .board-frame {
   border: 4px solid #ffffff;
-  box-shadow: inset 0 0 0 3px #f5d95c;
-  background: #cab172;
-  padding: 6px 8px 10px;
-  width: min(760px, 100%);
+  box-shadow: inset 0 0 0 4px #f2d95d;
+  background: #cda63d;
+  padding: 4px 6px 6px;
+  width: min(860px, 100%);
 }
 
 .coordinate-row {
   display: grid;
-  grid-template-columns: 24px repeat(9, minmax(0, 1fr));
-  gap: 2px;
-  margin-bottom: 2px;
+  grid-template-columns: 20px repeat(9, minmax(0, 1fr));
+  gap: 1px;
+  margin-bottom: 1px;
 }
 
 .coord-file,
 .coord-rank {
-  font-size: 12px;
-  color: #1d1300;
+  font-size: 11px;
+  color: #2a1c00;
   font-weight: 700;
 }
 
 .board-grid-wrapper {
   display: grid;
-  grid-template-columns: 24px 1fr;
-  gap: 2px;
+  grid-template-columns: 20px 1fr;
+  gap: 1px;
 }
 
 .coordinate-column {
   display: grid;
-  grid-template-rows: repeat(9, minmax(32px, 1fr));
+  grid-template-rows: repeat(9, minmax(42px, 1fr));
   align-items: center;
 }
 
 .board-grid {
   display: grid;
-  grid-template-columns: repeat(9, minmax(32px, 1fr));
-  grid-template-rows: repeat(9, minmax(32px, 1fr));
+  grid-template-columns: repeat(9, minmax(42px, 1fr));
+  grid-template-rows: repeat(9, minmax(42px, 1fr));
 }
 
 .board-cell {
   position: relative;
-  border: 2px solid #4c3404;
-  background: #d7be7e;
+  border: 2px solid #2e1d00;
+  background: #d9b24b;
   cursor: pointer;
   display: grid;
   place-items: center;
   aspect-ratio: 1;
   padding: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .board-cell.is-selected {
-  outline: 3px solid #62f5ff;
-  z-index: 3;
+  outline: 4px solid #72fdff;
+  z-index: 20;
+  animation: selectBlink 0.34s steps(2, end) infinite;
 }
 
 .blast-origin::before {
   content: '';
   position: absolute;
-  inset: 10%;
-  background: #fff7cc;
-  border: 2px solid #ffad31;
+  inset: -4px;
+  background: #fffef5;
+  border: 3px solid #ffb61d;
   z-index: 1;
-  animation: flicker 0.28s steps(2, end) infinite;
+  animation: flicker 0.2s steps(2, end) infinite;
 }
 
 .piece {
   position: relative;
-  z-index: 5;
-  width: 78%;
+  z-index: 25;
+  width: 82%;
   aspect-ratio: 1;
   display: grid;
   place-items: center;
-  color: #181100;
-  font-size: clamp(16px, 2.6vw, 24px);
+  color: #1b1200;
+  font-size: clamp(16px, 2.8vw, 26px);
   font-weight: 700;
-  background: #f0da9c;
-  border: 2px solid #4c3404;
-  clip-path: polygon(50% 0%, 92% 22%, 92% 94%, 8% 94%, 8% 22%);
+  background: #f2dc9f;
+  border: 2px solid #2e1d00;
+  clip-path: polygon(50% 0%, 92% 22%, 92% 95%, 8% 95%, 8% 22%);
 }
 
 .piece-gote {
@@ -149,141 +158,156 @@ body {
 .has-blast::before {
   content: '';
   position: absolute;
-  inset: 3px;
-  z-index: 1;
-  background: #ff4500;
+  inset: -8px;
+  z-index: 6;
+  background: #d11300;
+  border: 2px solid #640800;
   box-shadow:
-    inset 0 0 0 3px #ff9f1c,
-    inset 0 0 0 6px #ffe44d,
-    inset 0 0 0 9px #fffbe1;
-  opacity: 0.85;
+    inset 0 0 0 6px #ff7300,
+    inset 0 0 0 12px #ffd83d,
+    inset 0 0 0 17px #fffef5;
 }
 
 .has-blast::after {
   content: '';
   position: absolute;
-  inset: 0;
-  z-index: 2;
+  inset: -6px;
+  z-index: 7;
 }
 
 .blast-move::before {
-  background: #ff5b00;
+  background: #ea2800;
   box-shadow:
-    inset 0 0 0 3px #ffae00,
-    inset 0 0 0 6px #ffe85f,
-    inset 0 0 0 9px #fffde0;
+    inset 0 0 0 6px #ff8500,
+    inset 0 0 0 12px #ffd83d,
+    inset 0 0 0 17px #fffef5;
 }
 
 .blast-capture::before {
-  background: #c81000;
+  background: #8f0200;
   box-shadow:
-    inset 0 0 0 3px #ff3c00,
-    inset 0 0 0 6px #ff9200,
-    inset 0 0 0 9px #ffe86e;
+    inset 0 0 0 6px #ff2800,
+    inset 0 0 0 12px #ff9400,
+    inset 0 0 0 17px #ffe870;
 }
 
 .blast-anim::before {
-  animation: flicker 0.24s steps(2, end) infinite;
+  animation: flicker 0.2s steps(2, end) infinite;
 }
 
 .blast-anim::after {
-  animation: popTile 0.2s steps(2, end);
+  animation: popTile 0.12s steps(2, end);
 }
 
 .blast-core {
   position: absolute;
-  width: 34%;
-  height: 34%;
-  z-index: 3;
-  background: #fffde0;
-  border: 2px solid #ff9f00;
+  width: 56%;
+  height: 56%;
+  z-index: 8;
+  background: #fffef5;
+  border: 3px solid #ff9800;
 }
 
 .blast-piece-rook.has-blast::after {
   background:
-    linear-gradient(90deg, transparent 0 30%, #fffde0 30% 70%, transparent 70% 100%),
-    linear-gradient(180deg, transparent 0 30%, #ffb42d 30% 70%, transparent 70% 100%);
+    linear-gradient(90deg, transparent 0 24%, #fffef5 24% 76%, transparent 76% 100%),
+    linear-gradient(180deg, transparent 0 24%, #ff9e18 24% 76%, transparent 76% 100%);
 }
 
 .blast-piece-bishop.has-blast::after {
   background:
-    linear-gradient(45deg, transparent 40%, #fffde0 40% 60%, transparent 60%),
-    linear-gradient(-45deg, transparent 40%, #ffb42d 40% 60%, transparent 60%);
+    linear-gradient(45deg, transparent 33%, #fffef5 33% 67%, transparent 67%),
+    linear-gradient(-45deg, transparent 33%, #ff9e18 33% 67%, transparent 67%);
 }
 
 .blast-piece-lance.has-blast::after {
-  background: linear-gradient(180deg, #fffde0 0 28%, #ffd34b 28% 58%, #ff7b00 58% 80%, #c81000 80% 100%);
-  clip-path: polygon(34% 0%, 66% 0%, 62% 100%, 38% 100%);
+  background: linear-gradient(180deg, #fffef5 0 28%, #ffd83d 28% 56%, #ff7d00 56% 76%, #ba0b00 76% 100%);
+  clip-path: polygon(30% 0%, 70% 0%, 64% 100%, 36% 100%);
 }
 
 .blast-piece-king.has-blast::after,
 .blast-piece-gold.has-blast::after,
 .blast-piece-silver.has-blast::after,
 .blast-piece-pawn.has-blast::after {
-  inset: 18%;
-  background: linear-gradient(180deg, #fffde0 0 30%, #ffd34b 30% 60%, #ff7b00 60% 80%, #c81000 80% 100%);
-  border: 2px solid #6a1000;
+  inset: 8%;
+  background: linear-gradient(180deg, #fffef5 0 30%, #ffd83d 30% 58%, #ff7d00 58% 78%, #ba0b00 78% 100%);
+  border: 2px solid #5f0000;
 }
 
 .blast-piece-knight.has-blast::after {
-  inset: 12%;
-  background: #ff4d00;
+  inset: 4%;
+  background: #ff3c00;
   box-shadow:
-    inset 0 0 0 3px #ffae00,
-    inset 0 0 0 6px #fff189;
+    inset 0 0 0 5px #ffb300,
+    inset 0 0 0 10px #fff38a;
   clip-path: polygon(50% 0%, 68% 30%, 100% 50%, 68% 70%, 50% 100%, 32% 70%, 0% 50%, 32% 30%);
 }
 
 .capture-icon {
   position: absolute;
-  z-index: 6;
-  font-size: 11px;
-  right: 2px;
-  bottom: 1px;
+  z-index: 30;
+  font-size: 12px;
+  right: -2px;
+  bottom: -2px;
   color: #fff;
+  background: #900;
+  border: 1px solid #fff;
+}
+
+.bottom-hud {
+  display: grid;
+  grid-template-columns: 1fr 2fr auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.bottom-left,
+.bottom-center {
+  border: 2px solid #fff;
+  box-shadow: inset 0 0 0 2px #f2d95d;
+  background: #0b1f74;
+  padding: 6px;
+  font-size: 12px;
+}
+
+.bottom-center {
+  text-align: left;
 }
 
 .retro-button {
   border: 3px solid #fff;
-  box-shadow: inset 0 0 0 2px #f5d95c;
+  box-shadow: inset 0 0 0 2px #f2d95d;
   background: #b00020;
   color: #fff;
-  padding: 4px 12px;
+  padding: 8px 14px;
   font-family: inherit;
   font-size: 12px;
   cursor: pointer;
 }
 
 @keyframes flicker {
-  0% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.74;
-  }
-  100% {
-    opacity: 1;
-  }
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
 }
 
 @keyframes popTile {
-  from {
-    transform: scale(0.4);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
+  from { transform: scale(0.1); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes selectBlink {
+  0% { outline-color: #72fdff; }
+  50% { outline-color: #fff45e; }
+  100% { outline-color: #72fdff; }
 }
 
 @media (max-width: 760px) {
-  .hud {
-    flex-direction: column;
-    align-items: flex-start;
+  .top-hud {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .bottom-hud {
-    gap: 8px;
+    grid-template-columns: 1fr;
   }
 }
