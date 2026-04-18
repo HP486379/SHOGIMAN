@@ -26,13 +26,9 @@ function App() {
   const blastType = selectedPiece ? pieceBlastType(selectedPiece.type) : null;
 
   const footerMessage = useMemo(() => {
-    if (!selectedPiece) {
-      return 'SELECT PIECE';
-    }
-    if (legalMoves.length === 0) {
-      return 'NO BLAST RANGE';
-    }
-    return 'SELECT DESTINATION';
+    if (!selectedPiece) return 'READY';
+    if (legalMoves.length === 0) return 'NO RANGE';
+    return 'SELECT DEST';
   }, [legalMoves.length, selectedPiece]);
 
   const onCellClick = (row: number, col: number) => {
@@ -72,36 +68,27 @@ function App() {
 
   return (
     <main className="screen">
-      <div className="crt-overlay" aria-hidden="true" />
-
-      <header className="retro-header">
-        <p className="blink">1P VS CPU</p>
-        <h1>SHOGIMAN BLAST BOARD</h1>
-        <p>CPU STATUS: STANDBY (DUMMY)</p>
+      <header className="hud top-hud">
+        <span>1P VS CPU</span>
+        <span>BLAST: {blastType ?? '---'}</span>
       </header>
 
-      <section className="status-panel">
-        <span>SHOW BLAST RANGE</span>
-        <span className="blast-type">EFFECT: {blastType ?? '---'}</span>
+      <section className="playfield">
+        <ShogiBoard
+          board={board}
+          selected={selected}
+          legalMoves={legalMoves}
+          selectedPieceType={selectedType}
+          onCellClick={onCellClick}
+        />
       </section>
 
-      <ShogiBoard
-        board={board}
-        selected={selected}
-        legalMoves={legalMoves}
-        selectedPieceType={selectedType}
-        onCellClick={onCellClick}
-      />
-
-      <div className="controls">
+      <footer className="hud bottom-hud">
+        <span>{footerMessage}</span>
+        <span>SELECT PIECE / BLAST RANGE / SELECT DEST</span>
         <button type="button" className="retro-button" onClick={resetGame}>
-          RESET ROUND
+          RESET
         </button>
-      </div>
-
-      <footer className="retro-footer">
-        <p className="footer-main">▶ {footerMessage}</p>
-        <p className="footer-sub">A: SELECT PIECE / B: SHOW BLAST RANGE / START: SELECT DESTINATION</p>
       </footer>
     </main>
   );
