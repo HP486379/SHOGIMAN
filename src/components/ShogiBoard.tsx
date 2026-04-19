@@ -93,7 +93,6 @@ export const ShogiBoard = ({ board, selected, legalMoves, selectedPieceType, onC
                   onClick={() => onCellClick(rowIndex, colIndex)}
                 >
                   {cell && <span className={pieceClass(cell)}>{pieceLabel(cell)}</span>}
-                  {move && <span className="blast-core" aria-hidden="true" />}
                   {move?.kind === 'capture' && <span className="capture-icon">⚔</span>}
                 </button>
               );
