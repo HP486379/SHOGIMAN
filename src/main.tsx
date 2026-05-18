@@ -5,6 +5,7 @@ import './index.css';
 import './extra.css';
 import './unitIcons.css';
 import './battlefield.css';
+import './unitGuide.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
