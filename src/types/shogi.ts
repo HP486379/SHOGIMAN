@@ -48,6 +48,7 @@ export interface GameState {
   effects: EffectCell[];
   captureEffect: Position | null;
   currentPlayer: Player;
+  gameOverWinner: Player | null;
   moveCount: number;
   seEnabled: boolean;
   cpuLevel: CpuLevel;
