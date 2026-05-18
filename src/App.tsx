@@ -4,10 +4,11 @@ import { Header } from './components/Header';
 import { Board } from './components/Board';
 import { Controls } from './components/Controls';
 import { OpeningScreen } from './components/OpeningScreen';
+import { PieceStand } from './components/PieceStand';
 
 function App() {
   const [hasStarted, setHasStarted] = useState(false);
-  const { state, handleCellClick, answerPromotion, reset, toggleSE, setCpuLevel } = useShogi();
+  const { state, handleCellClick, selectHandPiece, answerPromotion, reset, toggleSE, setCpuLevel } = useShogi();
 
   return (
     <div className="app-root">
@@ -28,6 +29,14 @@ function App() {
             onReset={reset}
           />
           <main className="main-area">
+            <PieceStand
+              player="white"
+              label="CPU CAPTURED"
+              hands={state.hands}
+              selectedHandPiece={null}
+              currentPlayer={state.currentPlayer}
+              onSelectHandPiece={selectHandPiece}
+            />
             <div className="player-tag cpu-tag">
               <span className="player-label cpu-label">▽ CPU  GOTE</span>
               <span className="player-hp">LV {state.cpuLevel.toUpperCase()}</span>
@@ -36,12 +45,21 @@ function App() {
               board={state.board}
               selectedPos={state.selectedPos}
               effects={state.effects}
+              captureEffect={state.captureEffect}
               onCellClick={handleCellClick}
             />
             <div className="player-tag p1-tag">
               <span className="player-label p1-label">▲ 1P  SENTE</span>
               <span className="player-hp">■■■■■■■■ 100%</span>
             </div>
+            <PieceStand
+              player="black"
+              label="1P CAPTURED"
+              hands={state.hands}
+              selectedHandPiece={state.selectedHandPiece}
+              currentPlayer={state.currentPlayer}
+              onSelectHandPiece={selectHandPiece}
+            />
           </main>
           <Controls cpuLevel={state.cpuLevel} onCpuLevelChange={setCpuLevel} />
         </div>
