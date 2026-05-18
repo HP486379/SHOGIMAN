@@ -20,6 +20,8 @@ export interface Piece {
 
 export type BoardGrid = (Piece | null)[][];
 
+export type HandPieces = Record<Player, PieceType[]>;
+
 export interface Position {
   row: number;
   col: number;
@@ -40,8 +42,11 @@ export interface PendingPromotion {
 
 export interface GameState {
   board: BoardGrid;
+  hands: HandPieces;
   selectedPos: Position | null;
+  selectedHandPiece: PieceType | null;
   effects: EffectCell[];
+  captureEffect: Position | null;
   currentPlayer: Player;
   moveCount: number;
   seEnabled: boolean;
