@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PieceType } from './types/shogi';
 import { useShogi } from './hooks/useShogi';
 import { Header } from './components/Header';
 import { Board } from './components/Board';
@@ -10,6 +11,11 @@ import { UnitGuide } from './components/UnitGuide';
 function App() {
   const [hasStarted, setHasStarted] = useState(false);
   const { state, handleCellClick, selectHandPiece, answerPromotion, reset, toggleSE, setCpuLevel } = useShogi();
+
+  const selectedBoardPiece = state.selectedPos
+    ? state.board[state.selectedPos.row]?.[state.selectedPos.col]
+    : null;
+  const activeGuidePieceType: PieceType | null = state.selectedHandPiece ?? selectedBoardPiece?.type ?? null;
 
   const handleRestart = () => {
     reset();
@@ -70,7 +76,7 @@ function App() {
             </main>
             <Controls cpuLevel={state.cpuLevel} onCpuLevelChange={setCpuLevel} />
           </div>
-          <UnitGuide />
+          <UnitGuide activePieceType={activeGuidePieceType} />
         </div>
       )}
       {state.pendingPromotion && (
