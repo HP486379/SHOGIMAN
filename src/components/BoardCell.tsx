@@ -28,9 +28,11 @@ function getEffectClass(effect: EffectCell): string {
 
 export function BoardCell({ row, col, piece, isSelected, effect, onClick }: BoardCellProps) {
   const isLight = (row + col) % 2 === 0;
-  const forceUprightStyle = piece?.player === 'white'
-    ? { transform: 'none' }
+  const isWhitePiece = piece?.player === 'white';
+  const pieceOrientationStyle = isWhitePiece
+    ? { transform: 'rotate(180deg)' }
     : undefined;
+  const selectedPieceClass = isSelected && !isWhitePiece ? 'piece-selected' : '';
 
   return (
     <div
@@ -47,11 +49,11 @@ export function BoardCell({ row, col, piece, isSelected, effect, onClick }: Boar
       )}
       {piece && (
         <div
-          className={`piece ${piece.player === 'black' ? 'piece-black' : 'piece-white'} ${isSelected ? 'piece-selected' : ''}`}
-          style={forceUprightStyle}
+          className={`piece ${piece.player === 'black' ? 'piece-black' : 'piece-white'} ${selectedPieceClass}`}
+          style={pieceOrientationStyle}
         >
-          <span className="piece-kanji" style={forceUprightStyle}>{PIECE_KANJI[piece.type]}</span>
-          <span className="piece-dot" style={forceUprightStyle}>
+          <span className="piece-kanji">{PIECE_KANJI[piece.type]}</span>
+          <span className="piece-dot">
             {piece.player === 'black' ? '▲' : '▽'}
           </span>
         </div>
