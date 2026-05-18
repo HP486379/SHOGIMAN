@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
-import { GameState, Position, EffectCell, CpuLevel } from '../types/shogi';
+import { GameState, Position, EffectCell, CpuLevel, Piece } from '../types/shogi';
 import { createInitialBoard } from '../utils/initialBoard';
-import { getValidMoves } from '../utils/moveRules';
+import { getValidMoves, moveTouchesPromotionZone, mustPromote, promotePiece } from '../utils/moveRules';
 import { chooseCpuMove } from '../utils/cpuPlayer';
 
 function cloneBoard(board: GameState['board']): GameState['board'] {
@@ -22,7 +22,16 @@ function createInitialState(cpuLevel: CpuLevel = 'normal'): GameState {
     moveCount: 0,
     seEnabled: true,
     cpuLevel,
+    pendingPromotion: null,
   };
+}
+
+function movePiece(board: GameState['board'], from: Position, to: Position, promote: boolean): GameState['board'] {
+  const newBoard = cloneBoard(board);
+  const movingPiece = newBoard[from.row][from.col];
+  newBoard[to.row][to.col] = movingPiece && promote ? promotePiece(movingPiece) : movingPiece;
+  newBoard[from.row][from.col] = null;
+  return newBoard;
 }
 
 export function useShogi() {
@@ -30,7 +39,7 @@ export function useShogi() {
 
   const handleCellClick = useCallback((pos: Position) => {
     setState(prev => {
-      if (prev.currentPlayer === 'white') return prev;
+      if (prev.currentPlayer === 'white' || prev.pendingPromotion) return prev;
 
       const { board, selectedPos, effects, currentPlayer } = prev;
       const clickedPiece = board[pos.row][pos.col];
@@ -44,12 +53,31 @@ export function useShogi() {
       );
 
       if (existingEffect && selectedPos) {
-        const newBoard = cloneBoard(board);
-        newBoard[pos.row][pos.col] = newBoard[selectedPos.row][selectedPos.col];
-        newBoard[selectedPos.row][selectedPos.col] = null;
+        const movingPiece = board[selectedPos.row][selectedPos.col] as Piece;
+
+        if (mustPromote(movingPiece, pos)) {
+          return {
+            ...prev,
+            board: movePiece(board, selectedPos, pos, true),
+            selectedPos: null,
+            effects: [],
+            currentPlayer: 'white',
+            moveCount: prev.moveCount + 1,
+          };
+        }
+
+        if (moveTouchesPromotionZone(movingPiece, selectedPos, pos)) {
+          return {
+            ...prev,
+            selectedPos: null,
+            effects: [],
+            pendingPromotion: { from: selectedPos, to: pos },
+          };
+        }
+
         return {
           ...prev,
-          board: newBoard,
+          board: movePiece(board, selectedPos, pos, false),
           selectedPos: null,
           effects: [],
           currentPlayer: currentPlayer === 'black' ? 'white' : 'black',
@@ -66,12 +94,28 @@ export function useShogi() {
     });
   }, []);
 
+  const answerPromotion = useCallback((promote: boolean) => {
+    setState(prev => {
+      if (!prev.pendingPromotion) return prev;
+
+      return {
+        ...prev,
+        board: movePiece(prev.board, prev.pendingPromotion.from, prev.pendingPromotion.to, promote),
+        selectedPos: null,
+        effects: [],
+        pendingPromotion: null,
+        currentPlayer: 'white',
+        moveCount: prev.moveCount + 1,
+      };
+    });
+  }, []);
+
   useEffect(() => {
-    if (state.currentPlayer !== 'white') return;
+    if (state.currentPlayer !== 'white' || state.pendingPromotion) return;
 
     const timerId = window.setTimeout(() => {
       setState(prev => {
-        if (prev.currentPlayer !== 'white') return prev;
+        if (prev.currentPlayer !== 'white' || prev.pendingPromotion) return prev;
 
         const cpuMove = chooseCpuMove(prev.board, prev.cpuLevel);
         if (!cpuMove) {
@@ -83,13 +127,9 @@ export function useShogi() {
           };
         }
 
-        const newBoard = cloneBoard(prev.board);
-        newBoard[cpuMove.to.row][cpuMove.to.col] = newBoard[cpuMove.from.row][cpuMove.from.col];
-        newBoard[cpuMove.from.row][cpuMove.from.col] = null;
-
         return {
           ...prev,
-          board: newBoard,
+          board: movePiece(prev.board, cpuMove.from, cpuMove.to, cpuMove.promote),
           selectedPos: null,
           effects: [],
           currentPlayer: 'black',
@@ -99,7 +139,7 @@ export function useShogi() {
     }, 450);
 
     return () => window.clearTimeout(timerId);
-  }, [state.currentPlayer, state.board, state.cpuLevel]);
+  }, [state.currentPlayer, state.board, state.cpuLevel, state.pendingPromotion]);
 
   const reset = useCallback(() => {
     setState(prev => createInitialState(prev.cpuLevel));
@@ -113,5 +153,5 @@ export function useShogi() {
     setState(prev => ({ ...prev, cpuLevel }));
   }, []);
 
-  return { state, handleCellClick, reset, toggleSE, setCpuLevel };
+  return { state, handleCellClick, answerPromotion, reset, toggleSE, setCpuLevel };
 }
