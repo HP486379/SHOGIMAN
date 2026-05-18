@@ -1,5 +1,7 @@
 export type Player = 'black' | 'white';
 
+export type CpuLevel = 'easy' | 'normal' | 'hard';
+
 export type PieceType =
   | 'king'
   | 'rook'
@@ -37,4 +39,5 @@ export interface GameState {
   currentPlayer: Player;
   moveCount: number;
   seEnabled: boolean;
+  cpuLevel: CpuLevel;
 }
