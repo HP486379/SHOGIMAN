@@ -425,7 +425,6 @@ body {
   background: linear-gradient(340deg, #f5e8c0 0%, #d4c080 60%, #b09040 100%);
   border: 2px solid #3a2200;
   box-shadow: -1px -2px 0 #1a1000, 0 0 0 1px #aa8800 inset;
-  transform: rotate(180deg);
 }
 
 .piece-black:hover, .piece-white:hover {
@@ -445,19 +444,11 @@ body {
   display: block;
 }
 
-.piece-white .piece-kanji {
-  transform: rotate(180deg);
-}
-
 .piece-dot {
   font-size: 7px;
   color: #5c3800;
   font-family: 'Press Start 2P', monospace;
   line-height: 1;
-}
-
-.piece-white .piece-dot {
-  transform: rotate(180deg);
 }
 
 /* =============================================
