@@ -1,10 +1,11 @@
 import { BoardGrid, CpuLevel, Piece, PieceType, Player, Position } from '../types/shogi';
-import { getValidMoves } from './moveRules';
+import { getValidMoves, mustPromote, promotePiece, moveTouchesPromotionZone } from './moveRules';
 
 export interface CpuMove {
   from: Position;
   to: Position;
   score: number;
+  promote: boolean;
 }
 
 const PIECE_VALUES: Record<PieceType, number> = {
@@ -30,6 +31,10 @@ function randomItem<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)];
 }
 
+function shouldCpuPromote(piece: Piece, from: Position, to: Position): boolean {
+  return mustPromote(piece, to) || moveTouchesPromotionZone(piece, from, to);
+}
+
 function collectLegalMoves(board: BoardGrid, player: Player): CpuMove[] {
   const moves: CpuMove[] = [];
 
@@ -41,7 +46,12 @@ function collectLegalMoves(board: BoardGrid, player: Player): CpuMove[] {
       const from = { row, col };
       const validMoves = getValidMoves(board, from, piece);
       for (const effect of validMoves) {
-        moves.push({ from, to: effect.position, score: 0 });
+        moves.push({
+          from,
+          to: effect.position,
+          score: 0,
+          promote: shouldCpuPromote(piece, from, effect.position),
+        });
       }
     }
   }
@@ -51,7 +61,8 @@ function collectLegalMoves(board: BoardGrid, player: Player): CpuMove[] {
 
 function applyMove(board: BoardGrid, move: CpuMove): BoardGrid {
   const nextBoard = cloneBoard(board);
-  nextBoard[move.to.row][move.to.col] = nextBoard[move.from.row][move.from.col];
+  const movingPiece = nextBoard[move.from.row][move.from.col];
+  nextBoard[move.to.row][move.to.col] = movingPiece && move.promote ? promotePiece(movingPiece) : movingPiece;
   nextBoard[move.from.row][move.from.col] = null;
   return nextBoard;
 }
@@ -70,6 +81,10 @@ function evaluateMove(board: BoardGrid, move: CpuMove, player: Player, level: Cp
   if (targetPiece) {
     score += PIECE_VALUES[targetPiece.type] * 100;
     score -= PIECE_VALUES[movingPiece.type] * 2;
+  }
+
+  if (move.promote) {
+    score += movingPiece.type === 'rook' || movingPiece.type === 'bishop' ? 50 : 25;
   }
 
   if (level === 'easy') return score;
