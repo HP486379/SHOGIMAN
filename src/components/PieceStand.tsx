@@ -1,15 +1,5 @@
 import { HandPieces, PieceType, Player } from '../types/shogi';
-
-const PIECE_KANJI: Record<PieceType, string> = {
-  king:   '王',
-  rook:   '飛',
-  bishop: '角',
-  gold:   '金',
-  silver: '銀',
-  knight: '桂',
-  lance:  '香',
-  pawn:   '歩',
-};
+import { getPieceTypeIcon } from '../assets/unitIcons';
 
 const PIECE_ORDER: PieceType[] = ['rook', 'bishop', 'gold', 'silver', 'knight', 'lance', 'pawn'];
 
@@ -51,7 +41,7 @@ export function PieceStand({ player, label, hands, selectedHandPiece, currentPla
               disabled={!canUse}
               onClick={() => onSelectHandPiece(pieceType)}
             >
-              <span className="hand-piece-kanji">{PIECE_KANJI[pieceType]}</span>
+              <img className="hand-unit-icon" src={getPieceTypeIcon(pieceType)} alt="" draggable={false} />
               <span className="hand-piece-count">×{count}</span>
             </button>
           );
