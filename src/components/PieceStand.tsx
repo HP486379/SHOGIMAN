@@ -1,5 +1,5 @@
 import { HandPieces, PieceType, Player } from '../types/shogi';
-import { getPieceTypeIcon } from '../assets/unitIcons';
+import { getBattlefieldPieceTypeIcon } from '../assets/battlefieldUnitIcons';
 
 const PIECE_ORDER: PieceType[] = ['rook', 'bishop', 'gold', 'silver', 'knight', 'lance', 'pawn'];
 
@@ -41,7 +41,7 @@ export function PieceStand({ player, label, hands, selectedHandPiece, currentPla
               disabled={!canUse}
               onClick={() => onSelectHandPiece(pieceType)}
             >
-              <img className="hand-unit-icon" src={getPieceTypeIcon(pieceType)} alt="" draggable={false} />
+              <img className="hand-unit-icon" src={getBattlefieldPieceTypeIcon(pieceType)} alt="" draggable={false} />
               <span className="hand-piece-count">×{count}</span>
             </button>
           );
