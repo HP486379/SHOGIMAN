@@ -29,6 +29,7 @@ function createInitialState(cpuLevel: CpuLevel = 'normal'): GameState {
     effects: [],
     captureEffect: null,
     currentPlayer: 'black',
+    gameOverWinner: null,
     moveCount: 0,
     seEnabled: true,
     cpuLevel,
@@ -89,12 +90,16 @@ function dropPiece(board: GameState['board'], pieceType: PieceType, player: Play
   return newBoard;
 }
 
+function isKingCaptured(piece: Piece | null): boolean {
+  return piece?.type === 'king';
+}
+
 export function useShogi() {
   const [state, setState] = useState<GameState>(() => createInitialState());
 
   const handleCellClick = useCallback((pos: Position) => {
     setState(prev => {
-      if (prev.currentPlayer === 'white' || prev.pendingPromotion) return prev;
+      if (prev.gameOverWinner || prev.currentPlayer === 'white' || prev.pendingPromotion) return prev;
 
       const { board, selectedPos, selectedHandPiece, effects, currentPlayer } = prev;
       const clickedPiece = board[pos.row][pos.col];
@@ -131,6 +136,7 @@ export function useShogi() {
         const capturedPiece = board[pos.row][pos.col];
         const handsAfterCapture = addCapturedPiece(prev.hands, currentPlayer, capturedPiece);
         const captureEffect = capturedPiece ? pos : null;
+        const winsByCapture = isKingCaptured(capturedPiece);
 
         if (mustPromote(movingPiece, pos)) {
           return {
@@ -141,12 +147,14 @@ export function useShogi() {
             selectedHandPiece: null,
             effects: [],
             captureEffect,
-            currentPlayer: 'white',
+            currentPlayer: winsByCapture ? currentPlayer : 'white',
+            gameOverWinner: winsByCapture ? currentPlayer : null,
+            pendingPromotion: null,
             moveCount: prev.moveCount + 1,
           };
         }
 
-        if (moveTouchesPromotionZone(movingPiece, selectedPos, pos)) {
+        if (!winsByCapture && moveTouchesPromotionZone(movingPiece, selectedPos, pos)) {
           return {
             ...prev,
             hands: handsAfterCapture,
@@ -166,7 +174,9 @@ export function useShogi() {
           selectedHandPiece: null,
           effects: [],
           captureEffect,
-          currentPlayer: currentPlayer === 'black' ? 'white' : 'black',
+          currentPlayer: winsByCapture ? currentPlayer : currentPlayer === 'black' ? 'white' : 'black',
+          gameOverWinner: winsByCapture ? currentPlayer : null,
+          pendingPromotion: null,
           moveCount: prev.moveCount + 1,
         };
       }
@@ -182,7 +192,7 @@ export function useShogi() {
 
   const selectHandPiece = useCallback((pieceType: PieceType) => {
     setState(prev => {
-      if (prev.currentPlayer === 'white' || prev.pendingPromotion) return prev;
+      if (prev.gameOverWinner || prev.currentPlayer === 'white' || prev.pendingPromotion) return prev;
       const isAlreadySelected = prev.selectedHandPiece === pieceType;
       return {
         ...prev,
@@ -195,7 +205,7 @@ export function useShogi() {
 
   const answerPromotion = useCallback((promote: boolean) => {
     setState(prev => {
-      if (!prev.pendingPromotion) return prev;
+      if (!prev.pendingPromotion || prev.gameOverWinner) return prev;
 
       return {
         ...prev,
@@ -219,11 +229,11 @@ export function useShogi() {
   }, [state.captureEffect]);
 
   useEffect(() => {
-    if (state.currentPlayer !== 'white' || state.pendingPromotion) return;
+    if (state.gameOverWinner || state.currentPlayer !== 'white' || state.pendingPromotion) return;
 
     const timerId = window.setTimeout(() => {
       setState(prev => {
-        if (prev.currentPlayer !== 'white' || prev.pendingPromotion) return prev;
+        if (prev.gameOverWinner || prev.currentPlayer !== 'white' || prev.pendingPromotion) return prev;
 
         const cpuMove = chooseCpuMove(prev.board, prev.hands, prev.cpuLevel);
         if (!cpuMove) {
@@ -253,6 +263,8 @@ export function useShogi() {
         if (!cpuMove.from) return prev;
 
         const capturedPiece = prev.board[cpuMove.to.row][cpuMove.to.col];
+        const winsByCapture = isKingCaptured(capturedPiece);
+
         return {
           ...prev,
           board: movePiece(prev.board, cpuMove.from, cpuMove.to, cpuMove.promote),
@@ -261,14 +273,16 @@ export function useShogi() {
           selectedHandPiece: null,
           effects: [],
           captureEffect: capturedPiece ? cpuMove.to : null,
-          currentPlayer: 'black',
+          currentPlayer: winsByCapture ? 'white' : 'black',
+          gameOverWinner: winsByCapture ? 'white' : null,
+          pendingPromotion: null,
           moveCount: prev.moveCount + 1,
         };
       });
     }, 450);
 
     return () => window.clearTimeout(timerId);
-  }, [state.currentPlayer, state.board, state.hands, state.cpuLevel, state.pendingPromotion]);
+  }, [state.gameOverWinner, state.currentPlayer, state.board, state.hands, state.cpuLevel, state.pendingPromotion]);
 
   const reset = useCallback(() => {
     setState(prev => createInitialState(prev.cpuLevel));
