@@ -1,5 +1,16 @@
-import { Piece, EffectCell, Position } from '../types/shogi';
+import { Piece, EffectCell, Position, PieceType } from '../types/shogi';
 import { getUnitIcon } from '../assets/unitIcons';
+
+const UNIT_LABELS: Record<PieceType, string> = {
+  pawn: 'INF',
+  lance: 'ART',
+  knight: 'DRN',
+  silver: 'SPC',
+  gold: 'GRD',
+  bishop: 'RKT',
+  rook: 'TNK',
+  king: 'HQ',
+};
 
 interface BoardCellProps {
   row: number;
@@ -19,12 +30,9 @@ function getEffectClass(effect: EffectCell): string {
 
 export function BoardCell({ row, col, piece, isSelected, effect, showCaptureExplosion, onClick }: BoardCellProps) {
   const isLight = (row + col) % 2 === 0;
-  const isWhitePiece = piece?.player === 'white';
-  const pieceOrientationStyle = isWhitePiece
-    ? { transform: 'rotate(180deg)' }
-    : undefined;
-  const selectedPieceClass = isSelected && !isWhitePiece ? 'piece-selected' : '';
+  const selectedPieceClass = isSelected ? 'piece-selected' : '';
   const promotedPieceClass = piece?.promoted ? 'piece-promoted' : '';
+  const sideClass = piece?.player === 'white' ? 'unit-cpu' : 'unit-player';
 
   return (
     <div
@@ -49,10 +57,10 @@ export function BoardCell({ row, col, piece, isSelected, effect, showCaptureExpl
       )}
       {piece && (
         <div
-          className={`piece unit-piece ${piece.player === 'black' ? 'piece-black' : 'piece-white'} ${selectedPieceClass} ${promotedPieceClass}`}
-          style={pieceOrientationStyle}
+          className={`piece unit-piece ${sideClass} ${selectedPieceClass} ${promotedPieceClass}`}
         >
           <img className="unit-icon" src={getUnitIcon(piece)} alt="" draggable={false} />
+          <span className="unit-type-label">{UNIT_LABELS[piece.type]}</span>
           {piece.promoted && <span className="unit-promoted-badge">UP</span>}
         </div>
       )}
