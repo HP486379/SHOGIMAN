@@ -4,7 +4,7 @@ import { Board } from './components/Board';
 import { Controls } from './components/Controls';
 
 function App() {
-  const { state, handleCellClick, reset, toggleSE } = useShogi();
+  const { state, handleCellClick, reset, toggleSE, setCpuLevel } = useShogi();
 
   return (
     <div className="app-root">
@@ -20,7 +20,7 @@ function App() {
         <main className="main-area">
           <div className="player-tag cpu-tag">
             <span className="player-label cpu-label">▽ CPU  GOTE</span>
-            <span className="player-hp">■■■■■■■■ 100%</span>
+            <span className="player-hp">LV {state.cpuLevel.toUpperCase()}</span>
           </div>
           <Board
             board={state.board}
@@ -33,7 +33,7 @@ function App() {
             <span className="player-hp">■■■■■■■■ 100%</span>
           </div>
         </main>
-        <Controls />
+        <Controls cpuLevel={state.cpuLevel} onCpuLevelChange={setCpuLevel} />
       </div>
     </div>
   );
