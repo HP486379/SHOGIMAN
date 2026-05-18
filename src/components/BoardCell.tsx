@@ -11,6 +11,15 @@ const PIECE_KANJI: Record<Piece['type'], string> = {
   pawn:   '歩',
 };
 
+const PROMOTED_KANJI: Partial<Record<Piece['type'], string>> = {
+  rook:   '龍',
+  bishop: '馬',
+  silver: '全',
+  knight: '圭',
+  lance:  '杏',
+  pawn:   'と',
+};
+
 interface BoardCellProps {
   row: number;
   col: number;
@@ -26,6 +35,10 @@ function getEffectClass(effect: EffectCell): string {
   return `${base} ${delay}`;
 }
 
+function getPieceKanji(piece: Piece): string {
+  return piece.promoted ? PROMOTED_KANJI[piece.type] ?? PIECE_KANJI[piece.type] : PIECE_KANJI[piece.type];
+}
+
 export function BoardCell({ row, col, piece, isSelected, effect, onClick }: BoardCellProps) {
   const isLight = (row + col) % 2 === 0;
   const isWhitePiece = piece?.player === 'white';
@@ -33,6 +46,7 @@ export function BoardCell({ row, col, piece, isSelected, effect, onClick }: Boar
     ? { transform: 'rotate(180deg)' }
     : undefined;
   const selectedPieceClass = isSelected && !isWhitePiece ? 'piece-selected' : '';
+  const promotedPieceClass = piece?.promoted ? 'piece-promoted' : '';
 
   return (
     <div
@@ -49,12 +63,12 @@ export function BoardCell({ row, col, piece, isSelected, effect, onClick }: Boar
       )}
       {piece && (
         <div
-          className={`piece ${piece.player === 'black' ? 'piece-black' : 'piece-white'} ${selectedPieceClass}`}
+          className={`piece ${piece.player === 'black' ? 'piece-black' : 'piece-white'} ${selectedPieceClass} ${promotedPieceClass}`}
           style={pieceOrientationStyle}
         >
-          <span className="piece-kanji">{PIECE_KANJI[piece.type]}</span>
+          <span className="piece-kanji">{getPieceKanji(piece)}</span>
           <span className="piece-dot">
-            {piece.player === 'black' ? '▲' : '▽'}
+            {piece.promoted ? '成' : piece.player === 'black' ? '▲' : '▽'}
           </span>
         </div>
       )}
