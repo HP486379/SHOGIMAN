@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react';
-import { GameState, Position, EffectCell } from '../types/shogi';
+import { useState, useCallback, useEffect } from 'react';
+import { GameState, Position, EffectCell, CpuLevel } from '../types/shogi';
 import { createInitialBoard } from '../utils/initialBoard';
 import { getValidMoves } from '../utils/moveRules';
+import { chooseCpuMove } from '../utils/cpuPlayer';
 
 function cloneBoard(board: GameState['board']): GameState['board'] {
   return board.map(row => row.map(cell => cell ? { ...cell } : null));
@@ -12,18 +13,25 @@ function posEqual(a: Position | null, b: Position | null): boolean {
   return a.row === b.row && a.col === b.col;
 }
 
-export function useShogi() {
-  const [state, setState] = useState<GameState>({
+function createInitialState(cpuLevel: CpuLevel = 'normal'): GameState {
+  return {
     board: createInitialBoard(),
     selectedPos: null,
     effects: [],
     currentPlayer: 'black',
     moveCount: 0,
     seEnabled: true,
-  });
+    cpuLevel,
+  };
+}
+
+export function useShogi() {
+  const [state, setState] = useState<GameState>(() => createInitialState());
 
   const handleCellClick = useCallback((pos: Position) => {
     setState(prev => {
+      if (prev.currentPlayer === 'white') return prev;
+
       const { board, selectedPos, effects, currentPlayer } = prev;
       const clickedPiece = board[pos.row][pos.col];
 
@@ -58,20 +66,52 @@ export function useShogi() {
     });
   }, []);
 
+  useEffect(() => {
+    if (state.currentPlayer !== 'white') return;
+
+    const timerId = window.setTimeout(() => {
+      setState(prev => {
+        if (prev.currentPlayer !== 'white') return prev;
+
+        const cpuMove = chooseCpuMove(prev.board, prev.cpuLevel);
+        if (!cpuMove) {
+          return {
+            ...prev,
+            currentPlayer: 'black',
+            selectedPos: null,
+            effects: [],
+          };
+        }
+
+        const newBoard = cloneBoard(prev.board);
+        newBoard[cpuMove.to.row][cpuMove.to.col] = newBoard[cpuMove.from.row][cpuMove.from.col];
+        newBoard[cpuMove.from.row][cpuMove.from.col] = null;
+
+        return {
+          ...prev,
+          board: newBoard,
+          selectedPos: null,
+          effects: [],
+          currentPlayer: 'black',
+          moveCount: prev.moveCount + 1,
+        };
+      });
+    }, 450);
+
+    return () => window.clearTimeout(timerId);
+  }, [state.currentPlayer, state.board, state.cpuLevel]);
+
   const reset = useCallback(() => {
-    setState({
-      board: createInitialBoard(),
-      selectedPos: null,
-      effects: [],
-      currentPlayer: 'black',
-      moveCount: 0,
-      seEnabled: true,
-    });
+    setState(prev => createInitialState(prev.cpuLevel));
   }, []);
 
   const toggleSE = useCallback(() => {
     setState(prev => ({ ...prev, seEnabled: !prev.seEnabled }));
   }, []);
 
-  return { state, handleCellClick, reset, toggleSE };
+  const setCpuLevel = useCallback((cpuLevel: CpuLevel) => {
+    setState(prev => ({ ...prev, cpuLevel }));
+  }, []);
+
+  return { state, handleCellClick, reset, toggleSE, setCpuLevel };
 }
