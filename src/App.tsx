@@ -5,6 +5,7 @@ import { Board } from './components/Board';
 import { Controls } from './components/Controls';
 import { OpeningScreen } from './components/OpeningScreen';
 import { PieceStand } from './components/PieceStand';
+import { UnitGuide } from './components/UnitGuide';
 
 function App() {
   const [hasStarted, setHasStarted] = useState(false);
@@ -25,48 +26,51 @@ function App() {
           onStart={() => setHasStarted(true)}
         />
       ) : (
-        <div className="app-content">
-          <Header
-            moveCount={state.moveCount}
-            currentPlayer={state.currentPlayer}
-            seEnabled={state.seEnabled}
-            onToggleSE={toggleSE}
-            onReset={reset}
-          />
-          <main className="main-area">
-            <PieceStand
-              player="white"
-              label="CPU CAPTURED"
-              hands={state.hands}
-              selectedHandPiece={null}
+        <div className="game-layout">
+          <div className="app-content">
+            <Header
+              moveCount={state.moveCount}
               currentPlayer={state.currentPlayer}
-              onSelectHandPiece={selectHandPiece}
+              seEnabled={state.seEnabled}
+              onToggleSE={toggleSE}
+              onReset={reset}
             />
-            <div className="player-tag cpu-tag">
-              <span className="player-label cpu-label">▽ CPU  GOTE</span>
-              <span className="player-hp">LV {state.cpuLevel.toUpperCase()}</span>
-            </div>
-            <Board
-              board={state.board}
-              selectedPos={state.selectedPos}
-              effects={state.effects}
-              captureEffect={state.captureEffect}
-              onCellClick={handleCellClick}
-            />
-            <div className="player-tag p1-tag">
-              <span className="player-label p1-label">▲ 1P  SENTE</span>
-              <span className="player-hp">■■■■■■■■ 100%</span>
-            </div>
-            <PieceStand
-              player="black"
-              label="1P CAPTURED"
-              hands={state.hands}
-              selectedHandPiece={state.selectedHandPiece}
-              currentPlayer={state.currentPlayer}
-              onSelectHandPiece={selectHandPiece}
-            />
-          </main>
-          <Controls cpuLevel={state.cpuLevel} onCpuLevelChange={setCpuLevel} />
+            <main className="main-area">
+              <PieceStand
+                player="white"
+                label="CPU CAPTURED"
+                hands={state.hands}
+                selectedHandPiece={null}
+                currentPlayer={state.currentPlayer}
+                onSelectHandPiece={selectHandPiece}
+              />
+              <div className="player-tag cpu-tag">
+                <span className="player-label cpu-label">▽ CPU  GOTE</span>
+                <span className="player-hp">LV {state.cpuLevel.toUpperCase()}</span>
+              </div>
+              <Board
+                board={state.board}
+                selectedPos={state.selectedPos}
+                effects={state.effects}
+                captureEffect={state.captureEffect}
+                onCellClick={handleCellClick}
+              />
+              <div className="player-tag p1-tag">
+                <span className="player-label p1-label">▲ 1P  SENTE</span>
+                <span className="player-hp">■■■■■■■■ 100%</span>
+              </div>
+              <PieceStand
+                player="black"
+                label="1P CAPTURED"
+                hands={state.hands}
+                selectedHandPiece={state.selectedHandPiece}
+                currentPlayer={state.currentPlayer}
+                onSelectHandPiece={selectHandPiece}
+              />
+            </main>
+            <Controls cpuLevel={state.cpuLevel} onCpuLevelChange={setCpuLevel} />
+          </div>
+          <UnitGuide />
         </div>
       )}
       {state.pendingPromotion && (
