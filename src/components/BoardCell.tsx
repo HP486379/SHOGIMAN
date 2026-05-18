@@ -1,5 +1,5 @@
 import { Piece, EffectCell, Position, PieceType } from '../types/shogi';
-import { getUnitIcon } from '../assets/unitIcons';
+import { getBattlefieldUnitIcon } from '../assets/battlefieldUnitIcons';
 
 const UNIT_LABELS: Record<PieceType, string> = {
   pawn: 'INF',
@@ -59,7 +59,7 @@ export function BoardCell({ row, col, piece, isSelected, effect, showCaptureExpl
         <div
           className={`piece unit-piece ${sideClass} ${selectedPieceClass} ${promotedPieceClass}`}
         >
-          <img className="unit-icon" src={getUnitIcon(piece)} alt="" draggable={false} />
+          <img className="unit-icon" src={getBattlefieldUnitIcon(piece)} alt="" draggable={false} />
           <span className="unit-type-label">{UNIT_LABELS[piece.type]}</span>
           {piece.promoted && <span className="unit-promoted-badge">UP</span>}
         </div>
