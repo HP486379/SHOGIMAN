@@ -1,4 +1,11 @@
-export function Controls() {
+import { CpuLevel } from '../types/shogi';
+
+interface ControlsProps {
+  cpuLevel: CpuLevel;
+  onCpuLevelChange: (level: CpuLevel) => void;
+}
+
+export function Controls({ cpuLevel, onCpuLevelChange }: ControlsProps) {
   return (
     <div className="controls-bar">
       <div className="controls-inner">
@@ -20,6 +27,19 @@ export function Controls() {
             <span className="legend-swatch diagonal-swatch"></span>
             <span>BISHOP BLAST</span>
           </div>
+        </div>
+        <div className="cpu-level-box">
+          <label className="cpu-level-label" htmlFor="cpu-level-select">CPU LV</label>
+          <select
+            id="cpu-level-select"
+            className="cpu-level-select"
+            value={cpuLevel}
+            onChange={(event) => onCpuLevelChange(event.target.value as CpuLevel)}
+          >
+            <option value="easy">EASY</option>
+            <option value="normal">NORMAL</option>
+            <option value="hard">HARD</option>
+          </select>
         </div>
         <div className="controls-guide">
           <span className="guide-item">▶ CLICK PIECE → SELECT</span>
