@@ -26,6 +26,7 @@ interface BoardCellProps {
   piece: Piece | null;
   isSelected: boolean;
   effect: EffectCell | null;
+  showCaptureExplosion: boolean;
   onClick: (pos: Position) => void;
 }
 
@@ -39,7 +40,7 @@ function getPieceKanji(piece: Piece): string {
   return piece.promoted ? PROMOTED_KANJI[piece.type] ?? PIECE_KANJI[piece.type] : PIECE_KANJI[piece.type];
 }
 
-export function BoardCell({ row, col, piece, isSelected, effect, onClick }: BoardCellProps) {
+export function BoardCell({ row, col, piece, isSelected, effect, showCaptureExplosion, onClick }: BoardCellProps) {
   const isLight = (row + col) % 2 === 0;
   const isWhitePiece = piece?.player === 'white';
   const pieceOrientationStyle = isWhitePiece
@@ -59,6 +60,14 @@ export function BoardCell({ row, col, piece, isSelected, effect, onClick }: Boar
           {effect.kind === 'cross' && <span className="flame-symbol">╋</span>}
           {effect.kind === 'diagonal' && <span className="flame-symbol">✦</span>}
           {effect.kind === 'flame' && <span className="flame-symbol">◆</span>}
+        </div>
+      )}
+      {showCaptureExplosion && (
+        <div className="bomb-explosion" aria-hidden="true">
+          <span className="bomb-core">●</span>
+          <span className="bomb-spark spark-1">✹</span>
+          <span className="bomb-spark spark-2">✸</span>
+          <span className="bomb-spark spark-3">✹</span>
         </div>
       )}
       {piece && (
