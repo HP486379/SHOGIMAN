@@ -4,7 +4,7 @@ import { Board } from './components/Board';
 import { Controls } from './components/Controls';
 
 function App() {
-  const { state, handleCellClick, reset, toggleSE, setCpuLevel } = useShogi();
+  const { state, handleCellClick, answerPromotion, reset, toggleSE, setCpuLevel } = useShogi();
 
   return (
     <div className="app-root">
@@ -35,6 +35,18 @@ function App() {
         </main>
         <Controls cpuLevel={state.cpuLevel} onCpuLevelChange={setCpuLevel} />
       </div>
+      {state.pendingPromotion && (
+        <div className="promotion-overlay">
+          <div className="promotion-panel">
+            <div className="promotion-title">PROMOTE?</div>
+            <div className="promotion-text">敵陣に入りました。成りますか？</div>
+            <div className="promotion-actions">
+              <button className="retro-btn promote-btn" onClick={() => answerPromotion(true)}>成る</button>
+              <button className="retro-btn decline-btn" onClick={() => answerPromotion(false)}>成らない</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
