@@ -20,6 +20,11 @@
   margin-top: 18px;
 }
 
+.unit-guide-panel-wrap {
+  position: relative;
+  width: 100%;
+}
+
 .unit-guide-panel-image {
   display: block;
   width: 100%;
@@ -27,6 +32,53 @@
   user-select: none;
   pointer-events: none;
   filter: drop-shadow(0 0 16px rgba(210, 190, 0, 0.7));
+}
+
+.unit-guide-active-highlight {
+  position: absolute;
+  z-index: 3;
+  box-sizing: border-box;
+  border: 3px solid #ffea4a;
+  border-radius: 8px;
+  background: rgba(255, 238, 70, 0.13);
+  box-shadow:
+    0 0 10px #fff266,
+    0 0 24px #ffd000,
+    inset 0 0 18px rgba(255, 242, 80, 0.45);
+  pointer-events: none;
+  animation: unit-guide-pulse 0.85s steps(2, end) infinite;
+}
+
+.guide-highlight-pawn,
+.guide-highlight-lance,
+.guide-highlight-knight,
+.guide-highlight-silver,
+.guide-highlight-gold,
+.guide-highlight-bishop,
+.guide-highlight-rook,
+.guide-highlight-king {
+  width: 44.8%;
+  height: 17.2%;
+}
+
+.guide-highlight-pawn { left: 4.8%; top: 18.2%; }
+.guide-highlight-lance { left: 50.5%; top: 18.2%; }
+.guide-highlight-knight { left: 4.8%; top: 36.3%; }
+.guide-highlight-silver { left: 50.5%; top: 36.3%; }
+.guide-highlight-gold { left: 4.8%; top: 54.2%; }
+.guide-highlight-bishop { left: 50.5%; top: 54.2%; }
+.guide-highlight-rook { left: 4.8%; top: 72.2%; }
+.guide-highlight-king { left: 50.5%; top: 72.2%; }
+
+@keyframes unit-guide-pulse {
+  0%, 100% {
+    opacity: 1;
+    filter: brightness(1.2);
+  }
+  50% {
+    opacity: 0.48;
+    filter: brightness(1.9);
+  }
 }
 
 .unit-guide-frame {
