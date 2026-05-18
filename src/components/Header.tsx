@@ -11,7 +11,7 @@ export function Header({ moveCount, currentPlayer, seEnabled, onToggleSE, onRese
     <div className="header-bar">
       <div className="header-inner">
         <div className="header-title">
-          <span className="title-main">★ SHOGI WARS ★</span>
+          <span className="title-main">★ SHOGIMAN ★</span>
           <span className="title-sub">1P VS CPU</span>
         </div>
         <div className="header-stats">
