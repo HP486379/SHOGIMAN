@@ -10,6 +10,11 @@ function App() {
   const [hasStarted, setHasStarted] = useState(false);
   const { state, handleCellClick, selectHandPiece, answerPromotion, reset, toggleSE, setCpuLevel } = useShogi();
 
+  const handleRestart = () => {
+    reset();
+    setHasStarted(false);
+  };
+
   return (
     <div className="app-root">
       <div className="scanlines" />
@@ -73,6 +78,18 @@ function App() {
               <button className="retro-btn promote-btn" onClick={() => answerPromotion(true)}>成る</button>
               <button className="retro-btn decline-btn" onClick={() => answerPromotion(false)}>成らない</button>
             </div>
+          </div>
+        </div>
+      )}
+      {state.gameOverWinner && (
+        <div className="game-over-overlay">
+          <div className="game-over-panel">
+            <div className="game-over-title">GAME SET</div>
+            <div className="game-over-winner">
+              {state.gameOverWinner === 'black' ? '1P WIN!' : 'CPU WIN!'}
+            </div>
+            <div className="game-over-text">玉を取りました。対局終了です。</div>
+            <button className="retro-btn start-btn" onClick={handleRestart}>TITLE</button>
           </div>
         </div>
       )}
