@@ -15,6 +15,7 @@ export type PieceType =
 export interface Piece {
   type: PieceType;
   player: Player;
+  promoted?: boolean;
 }
 
 export type BoardGrid = (Piece | null)[][];
@@ -32,6 +33,11 @@ export interface EffectCell {
   distance: number;
 }
 
+export interface PendingPromotion {
+  from: Position;
+  to: Position;
+}
+
 export interface GameState {
   board: BoardGrid;
   selectedPos: Position | null;
@@ -40,4 +46,5 @@ export interface GameState {
   moveCount: number;
   seEnabled: boolean;
   cpuLevel: CpuLevel;
+  pendingPromotion: PendingPromotion | null;
 }
