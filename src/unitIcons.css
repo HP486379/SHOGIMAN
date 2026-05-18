@@ -1,6 +1,6 @@
 .unit-piece {
-  width: 56px;
-  height: 56px;
+  width: 58px;
+  height: 58px;
   padding: 0;
   background: transparent !important;
   border: 0 !important;
@@ -9,32 +9,61 @@
 }
 
 .unit-icon {
-  width: 64px;
-  height: 64px;
+  width: 70px;
+  height: 70px;
   object-fit: contain;
   image-rendering: auto;
-  filter: drop-shadow(2px 3px 2px rgba(0, 0, 0, 0.78));
+  filter: drop-shadow(3px 4px 2px rgba(0, 0, 0, 0.82));
   pointer-events: none;
   user-select: none;
 }
 
-.piece-white .unit-icon {
-  filter: drop-shadow(-2px -3px 2px rgba(0, 0, 0, 0.78)) hue-rotate(170deg) saturate(0.85) brightness(0.95);
+.unit-player .unit-icon {
+  filter: drop-shadow(3px 4px 2px rgba(0, 0, 0, 0.82)) saturate(1.1) brightness(1.04);
+}
+
+.unit-cpu .unit-icon {
+  filter: drop-shadow(3px 4px 2px rgba(0, 0, 0, 0.82)) hue-rotate(188deg) saturate(0.95) brightness(0.98);
 }
 
 .piece-promoted .unit-icon {
-  filter: drop-shadow(2px 3px 2px rgba(0, 0, 0, 0.82)) saturate(1.25) brightness(1.12);
+  filter: drop-shadow(3px 4px 2px rgba(0, 0, 0, 0.88)) saturate(1.35) brightness(1.16);
 }
 
-.piece-white.piece-promoted .unit-icon {
-  filter: drop-shadow(-2px -3px 2px rgba(0, 0, 0, 0.82)) hue-rotate(170deg) saturate(1.05) brightness(1.06);
+.unit-cpu.piece-promoted .unit-icon {
+  filter: drop-shadow(3px 4px 2px rgba(0, 0, 0, 0.88)) hue-rotate(188deg) saturate(1.1) brightness(1.08);
+}
+
+.unit-type-label {
+  position: absolute;
+  left: 50%;
+  bottom: -3px;
+  z-index: 5;
+  transform: translateX(-50%);
+  min-width: 24px;
+  padding: 2px 3px;
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  font-size: 5px;
+  line-height: 1;
+  text-align: center;
+  color: #ffeeaa;
+  background: rgba(4, 8, 4, 0.92);
+  border: 1px solid #ffee55;
+  border-radius: 2px;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+}
+
+.unit-cpu .unit-type-label {
+  color: #bbddff;
+  border-color: #66aaff;
 }
 
 .unit-promoted-badge {
   position: absolute;
-  right: -4px;
-  bottom: 0;
-  z-index: 4;
+  right: -7px;
+  top: 6px;
+  z-index: 6;
   padding: 2px 3px;
   font-family: 'Press Start 2P', 'Courier New', monospace;
   font-size: 5px;
@@ -47,8 +76,8 @@
 }
 
 .hand-piece {
-  min-width: 50px;
-  min-height: 38px;
+  min-width: 58px;
+  min-height: 46px;
   padding: 2px 5px;
   background: #10170b;
   border-color: #516629;
@@ -56,8 +85,8 @@
 }
 
 .hand-unit-icon {
-  width: 34px;
-  height: 34px;
+  width: 42px;
+  height: 42px;
   object-fit: contain;
   filter: drop-shadow(1px 2px 1px rgba(0, 0, 0, 0.75));
   pointer-events: none;
@@ -75,8 +104,14 @@
   }
 
   .unit-icon {
-    width: 46px;
-    height: 46px;
+    width: 48px;
+    height: 48px;
+  }
+
+  .unit-type-label {
+    font-size: 4px;
+    min-width: 19px;
+    bottom: -2px;
   }
 
   .hand-unit-icon {
