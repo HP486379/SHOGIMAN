@@ -1,24 +1,5 @@
 import { Piece, EffectCell, Position } from '../types/shogi';
-
-const PIECE_KANJI: Record<Piece['type'], string> = {
-  king:   '王',
-  rook:   '飛',
-  bishop: '角',
-  gold:   '金',
-  silver: '銀',
-  knight: '桂',
-  lance:  '香',
-  pawn:   '歩',
-};
-
-const PROMOTED_KANJI: Partial<Record<Piece['type'], string>> = {
-  rook:   '龍',
-  bishop: '馬',
-  silver: '全',
-  knight: '圭',
-  lance:  '杏',
-  pawn:   'と',
-};
+import { getUnitIcon } from '../assets/unitIcons';
 
 interface BoardCellProps {
   row: number;
@@ -34,10 +15,6 @@ function getEffectClass(effect: EffectCell): string {
   const base = `effect-cell effect-${effect.kind}`;
   const delay = `delay-${Math.min(effect.distance, 8)}`;
   return `${base} ${delay}`;
-}
-
-function getPieceKanji(piece: Piece): string {
-  return piece.promoted ? PROMOTED_KANJI[piece.type] ?? PIECE_KANJI[piece.type] : PIECE_KANJI[piece.type];
 }
 
 export function BoardCell({ row, col, piece, isSelected, effect, showCaptureExplosion, onClick }: BoardCellProps) {
@@ -72,13 +49,11 @@ export function BoardCell({ row, col, piece, isSelected, effect, showCaptureExpl
       )}
       {piece && (
         <div
-          className={`piece ${piece.player === 'black' ? 'piece-black' : 'piece-white'} ${selectedPieceClass} ${promotedPieceClass}`}
+          className={`piece unit-piece ${piece.player === 'black' ? 'piece-black' : 'piece-white'} ${selectedPieceClass} ${promotedPieceClass}`}
           style={pieceOrientationStyle}
         >
-          <span className="piece-kanji">{getPieceKanji(piece)}</span>
-          <span className="piece-dot">
-            {piece.promoted ? '成' : piece.player === 'black' ? '▲' : '▽'}
-          </span>
+          <img className="unit-icon" src={getUnitIcon(piece)} alt="" draggable={false} />
+          {piece.promoted && <span className="unit-promoted-badge">UP</span>}
         </div>
       )}
       {!piece && !effect && (
