@@ -5,6 +5,7 @@ interface BoardProps {
   board: BoardGrid;
   selectedPos: Position | null;
   effects: EffectCell[];
+  captureEffect: Position | null;
   onCellClick: (pos: Position) => void;
 }
 
@@ -15,7 +16,7 @@ function getEffect(effects: EffectCell[], row: number, col: number): EffectCell 
   return effects.find(e => e.position.row === row && e.position.col === col) ?? null;
 }
 
-export function Board({ board, selectedPos, effects, onCellClick }: BoardProps) {
+export function Board({ board, selectedPos, effects, captureEffect, onCellClick }: BoardProps) {
   return (
     <div className="board-wrapper">
       <div className="board-container">
@@ -37,6 +38,9 @@ export function Board({ board, selectedPos, effects, onCellClick }: BoardProps) 
                     selectedPos?.row === rIdx && selectedPos?.col === cIdx
                   }
                   effect={getEffect(effects, rIdx, cIdx)}
+                  showCaptureExplosion={
+                    captureEffect?.row === rIdx && captureEffect?.col === cIdx
+                  }
                   onClick={onCellClick}
                 />
               ))}
