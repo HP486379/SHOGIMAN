@@ -81,9 +81,11 @@ function App() {
                 onSelectHandPiece={selectHandPiece}
               />
             </main>
-            <Controls cpuLevel={state.cpuLevel} onCpuLevelChange={setCpuLevel} />
           </div>
-          <UnitGuide activePieceType={activeGuidePieceType} />
+          <aside className="side-panel">
+            <UnitGuide activePieceType={activeGuidePieceType} />
+            <Controls cpuLevel={state.cpuLevel} onCpuLevelChange={setCpuLevel} />
+          </aside>
         </div>
       )}
       {state.pendingPromotion && (
