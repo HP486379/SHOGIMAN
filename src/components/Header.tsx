@@ -1,18 +1,19 @@
 interface HeaderProps {
   moveCount: number;
   currentPlayer: 'black' | 'white';
+  firstTurnText: string;
   seEnabled: boolean;
   onToggleSE: () => void;
   onReset: () => void;
 }
 
-export function Header({ moveCount, currentPlayer, seEnabled, onToggleSE, onReset }: HeaderProps) {
+export function Header({ moveCount, currentPlayer, firstTurnText, seEnabled, onToggleSE, onReset }: HeaderProps) {
   return (
     <div className="header-bar">
       <div className="header-inner">
         <div className="header-title">
           <span className="title-main">★ SHOGI FRONTLINE ★</span>
-          <span className="title-sub">将棋戦線 / 1P VS CPU</span>
+          <span className="title-sub">将棋戦線 / {firstTurnText}</span>
         </div>
         <div className="header-stats">
           <div className="stat-block">
