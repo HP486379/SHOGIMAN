@@ -10,8 +10,8 @@ export function OpeningScreen({ cpuLevel, onCpuLevelChange, onStart }: OpeningSc
   return (
     <div className="opening-screen">
       <div className="opening-panel">
-        <div className="opening-title">★ SHOGIMAN ★</div>
-        <div className="opening-subtitle">FAMICOM SHOGI BLAST</div>
+        <div className="opening-title">★ SHOGI FRONTLINE ★</div>
+        <div className="opening-subtitle">将棋戦線</div>
         <div className="opening-menu">
           <label className="opening-label" htmlFor="opening-cpu-level">CPU LEVEL</label>
           <select
