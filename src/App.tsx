@@ -16,6 +16,9 @@ function App() {
     ? state.board[state.selectedPos.row]?.[state.selectedPos.col]
     : null;
   const activeGuidePieceType: PieceType | null = state.selectedHandPiece ?? selectedBoardPiece?.type ?? null;
+  const firstTurnText = state.firstPlayer === 'black' ? '1P SENTE' : 'CPU SENTE';
+  const cpuTurnRole = state.firstPlayer === 'white' ? 'SENTE' : 'GOTE';
+  const p1TurnRole = state.firstPlayer === 'black' ? 'SENTE' : 'GOTE';
 
   const handleRestart = () => {
     reset();
@@ -28,6 +31,7 @@ function App() {
       {!hasStarted ? (
         <OpeningScreen
           cpuLevel={state.cpuLevel}
+          firstPlayer={state.firstPlayer}
           onCpuLevelChange={setCpuLevel}
           onStart={() => setHasStarted(true)}
         />
@@ -37,6 +41,7 @@ function App() {
             <Header
               moveCount={state.moveCount}
               currentPlayer={state.currentPlayer}
+              firstTurnText={firstTurnText}
               seEnabled={state.seEnabled}
               onToggleSE={toggleSE}
               onReset={reset}
@@ -51,7 +56,7 @@ function App() {
                 onSelectHandPiece={selectHandPiece}
               />
               <div className="player-tag cpu-tag">
-                <span className="player-label cpu-label">▽ CPU  GOTE</span>
+                <span className="player-label cpu-label">{state.firstPlayer === 'white' ? '▲' : '▽'} CPU {cpuTurnRole}</span>
                 <span className="player-hp">LV {state.cpuLevel.toUpperCase()}</span>
               </div>
               <Board
@@ -60,10 +65,11 @@ function App() {
                 effects={state.effects}
                 captureEffect={state.captureEffect}
                 checkPlayer={state.checkPlayer}
+                lastMove={state.lastMove}
                 onCellClick={handleCellClick}
               />
               <div className="player-tag p1-tag">
-                <span className="player-label p1-label">▲ 1P  SENTE</span>
+                <span className="player-label p1-label">{state.firstPlayer === 'black' ? '▲' : '▽'} 1P {p1TurnRole}</span>
                 <span className="player-hp">■■■■■■■■ 100%</span>
               </div>
               <PieceStand
