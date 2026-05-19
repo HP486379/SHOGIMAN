@@ -17,6 +17,7 @@ interface BoardCellProps {
   col: number;
   piece: Piece | null;
   isSelected: boolean;
+  isCheckedKing: boolean;
   effect: EffectCell | null;
   showCaptureExplosion: boolean;
   onClick: (pos: Position) => void;
@@ -28,15 +29,16 @@ function getEffectClass(effect: EffectCell): string {
   return `${base} ${delay}`;
 }
 
-export function BoardCell({ row, col, piece, isSelected, effect, showCaptureExplosion, onClick }: BoardCellProps) {
+export function BoardCell({ row, col, piece, isSelected, isCheckedKing, effect, showCaptureExplosion, onClick }: BoardCellProps) {
   const isLight = (row + col) % 2 === 0;
   const selectedPieceClass = isSelected ? 'piece-selected' : '';
+  const checkedKingClass = isCheckedKing ? 'piece-check-target' : '';
   const promotedPieceClass = piece?.promoted ? 'piece-promoted' : '';
   const sideClass = piece?.player === 'white' ? 'unit-cpu' : 'unit-player';
 
   return (
     <div
-      className={`board-cell ${isLight ? 'cell-light' : 'cell-dark'} ${isSelected ? 'cell-selected' : ''}`}
+      className={`board-cell ${isLight ? 'cell-light' : 'cell-dark'} ${isSelected ? 'cell-selected' : ''} ${isCheckedKing ? 'cell-check-target' : ''}`}
       onClick={() => onClick({ row, col })}
     >
       {effect && (
@@ -57,7 +59,7 @@ export function BoardCell({ row, col, piece, isSelected, effect, showCaptureExpl
       )}
       {piece && (
         <div
-          className={`piece unit-piece ${sideClass} ${selectedPieceClass} ${promotedPieceClass}`}
+          className={`piece unit-piece ${sideClass} ${selectedPieceClass} ${checkedKingClass} ${promotedPieceClass}`}
         >
           <img className="unit-icon" src={getBattlefieldUnitIcon(piece)} alt="" draggable={false} />
           <span className="unit-type-label">{UNIT_LABELS[piece.type]}</span>
