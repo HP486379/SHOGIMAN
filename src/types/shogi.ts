@@ -27,6 +27,12 @@ export interface Position {
   col: number;
 }
 
+export interface LastMove {
+  from: Position | null;
+  to: Position;
+  player: Player;
+}
+
 export type EffectKind = 'flame' | 'capture' | 'cross' | 'diagonal';
 
 export interface EffectCell {
@@ -49,6 +55,8 @@ export interface GameState {
   captureEffect: Position | null;
   checkPlayer: Player | null;
   currentPlayer: Player;
+  firstPlayer: Player;
+  lastMove: LastMove | null;
   gameOverWinner: Player | null;
   moveCount: number;
   seEnabled: boolean;
