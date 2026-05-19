@@ -1,20 +1,39 @@
-/* Readability and move-tracking polish */
+/* Readability, layout, and move-tracking polish */
+
+.app-root {
+  align-items: flex-start !important;
+  padding-top: 14px !important;
+}
+
+.opening-screen {
+  max-width: 780px !important;
+}
+
+.opening-panel {
+  max-width: 720px !important;
+  padding: 42px 42px !important;
+}
 
 .opening-title {
-  font-size: 28px !important;
+  display: block;
+  white-space: nowrap;
+  font-size: 30px !important;
   line-height: 1.35;
+  letter-spacing: 2px;
 }
 
 .opening-subtitle {
-  font-size: 13px !important;
+  font-size: 22px !important;
   line-height: 1.5;
   color: #ffdd66 !important;
   text-shadow: 0 0 8px #ff9900;
+  letter-spacing: 4px;
+  margin-bottom: 16px !important;
 }
 
 .opening-first-turn {
   margin: 14px 0 22px;
-  font-size: 10px;
+  font-size: 13px;
   line-height: 1.6;
   color: #ffee66;
   text-shadow: 0 0 8px #ffcc00;
@@ -23,19 +42,77 @@
 
 .opening-label,
 .opening-help {
-  font-size: 9px !important;
+  font-size: 10px !important;
   line-height: 1.6;
 }
 
 .opening-select,
 .cpu-level-select {
-  font-size: 9px !important;
-  min-height: 34px;
+  font-size: 10px !important;
+  min-height: 38px;
 }
 
 .retro-btn {
+  font-size: 9px !important;
+  padding: 8px 12px !important;
+}
+
+.game-layout {
+  width: min(100vw - 24px, 1320px) !important;
+  max-width: 1320px !important;
+  display: grid !important;
+  grid-template-columns: minmax(720px, 780px) minmax(390px, 430px) !important;
+  align-items: start !important;
+  gap: 24px !important;
+}
+
+.app-content {
+  max-width: none !important;
+  width: 100% !important;
+}
+
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: stretch;
+  margin-top: 22px;
+}
+
+.side-panel .unit-guide {
+  width: 100% !important;
+  max-width: 430px !important;
+  flex: none !important;
+  margin-top: 42px !important;
+}
+
+.side-panel .controls-bar {
+  width: 100%;
+  max-width: 430px;
+  margin-top: 8px;
+}
+
+.side-panel .controls-inner {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.side-panel .legend-items {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px 12px;
+}
+
+.side-panel .legend-item,
+.side-panel .guide-item,
+.side-panel .cpu-level-label {
   font-size: 8px !important;
-  padding: 7px 10px !important;
+  line-height: 1.6;
+}
+
+.side-panel .cpu-level-box {
+  justify-content: flex-end;
 }
 
 .title-main {
@@ -58,7 +135,7 @@
 
 .player-tag {
   font-size: 9px !important;
-  min-height: 30px;
+  min-height: 32px;
 }
 
 .player-label {
@@ -71,8 +148,27 @@
 
 .stand-title,
 .stand-empty {
-  font-size: 8px !important;
+  font-size: 9px !important;
   line-height: 1.6;
+}
+
+.piece-stand {
+  min-height: 58px !important;
+  padding: 10px 14px !important;
+}
+
+.hand-piece {
+  min-width: 66px !important;
+  min-height: 54px !important;
+}
+
+.hand-unit-icon {
+  width: 50px !important;
+  height: 50px !important;
+}
+
+.hand-piece-count {
+  font-size: 7px !important;
 }
 
 .controls,
@@ -81,6 +177,26 @@
 .legend-text {
   font-size: 8px !important;
   line-height: 1.6;
+}
+
+.board-cell {
+  width: 62px !important;
+  height: 62px !important;
+}
+
+.board-col-labels .coord-label {
+  width: 62px !important;
+}
+
+.piece,
+.unit-piece {
+  width: 62px !important;
+  height: 62px !important;
+}
+
+.unit-icon {
+  width: 76px !important;
+  height: 76px !important;
 }
 
 .cell-last-from::before,
@@ -160,9 +276,33 @@
   }
 }
 
+@media (max-width: 1180px) {
+  .game-layout {
+    grid-template-columns: 1fr !important;
+    justify-items: center;
+  }
+
+  .side-panel {
+    width: min(100%, 720px);
+    margin-top: 0;
+    align-items: center;
+  }
+
+  .side-panel .unit-guide,
+  .side-panel .controls-bar {
+    max-width: 520px !important;
+  }
+}
+
 @media (max-width: 620px) {
-  .opening-title { font-size: 20px !important; }
+  .opening-title { font-size: 18px !important; white-space: normal; }
+  .opening-subtitle { font-size: 16px !important; }
   .title-main { font-size: 12px !important; }
   .title-sub { font-size: 7px !important; }
+  .board-cell { width: 38px !important; height: 38px !important; }
+  .board-col-labels .coord-label { width: 38px !important; }
+  .piece,
+  .unit-piece { width: 38px !important; height: 38px !important; }
+  .unit-icon { width: 48px !important; height: 48px !important; }
   .last-move-beacon { font-size: 4px; top: 2px; }
 }
