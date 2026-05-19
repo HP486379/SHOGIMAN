@@ -1,4 +1,4 @@
-import { BoardGrid, Position, EffectCell } from '../types/shogi';
+import { BoardGrid, Position, EffectCell, Player } from '../types/shogi';
 import { BoardCell } from './BoardCell';
 
 interface BoardProps {
@@ -6,6 +6,7 @@ interface BoardProps {
   selectedPos: Position | null;
   effects: EffectCell[];
   captureEffect: Position | null;
+  checkPlayer: Player | null;
   onCellClick: (pos: Position) => void;
 }
 
@@ -16,10 +17,16 @@ function getEffect(effects: EffectCell[], row: number, col: number): EffectCell 
   return effects.find(e => e.position.row === row && e.position.col === col) ?? null;
 }
 
-export function Board({ board, selectedPos, effects, captureEffect, onCellClick }: BoardProps) {
+export function Board({ board, selectedPos, effects, captureEffect, checkPlayer, onCellClick }: BoardProps) {
   return (
     <div className="board-wrapper">
-      <div className="board-container">
+      {checkPlayer && (
+        <div className={`check-warning check-warning-${checkPlayer}`}>
+          <span>CHECK!</span>
+          <small>{checkPlayer === 'black' ? '1P KING IN DANGER' : 'CPU KING IN DANGER'}</small>
+        </div>
+      )}
+      <div className={`board-container ${checkPlayer ? 'board-in-check' : ''}`}>
         <div className="board-col-labels">
           {FILES.map(f => (
             <span key={f} className="coord-label">{f}</span>
@@ -37,6 +44,7 @@ export function Board({ board, selectedPos, effects, captureEffect, onCellClick 
                   isSelected={
                     selectedPos?.row === rIdx && selectedPos?.col === cIdx
                   }
+                  isCheckedKing={piece?.type === 'king' && piece.player === checkPlayer}
                   effect={getEffect(effects, rIdx, cIdx)}
                   showCaptureExplosion={
                     captureEffect?.row === rIdx && captureEffect?.col === cIdx
