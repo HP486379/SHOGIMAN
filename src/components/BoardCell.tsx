@@ -17,6 +17,8 @@ interface BoardCellProps {
   col: number;
   piece: Piece | null;
   isSelected: boolean;
+  isLastMoveFrom: boolean;
+  isLastMoveTo: boolean;
   isCheckedKing: boolean;
   effect: EffectCell | null;
   showCaptureExplosion: boolean;
@@ -29,7 +31,7 @@ function getEffectClass(effect: EffectCell): string {
   return `${base} ${delay}`;
 }
 
-export function BoardCell({ row, col, piece, isSelected, isCheckedKing, effect, showCaptureExplosion, onClick }: BoardCellProps) {
+export function BoardCell({ row, col, piece, isSelected, isLastMoveFrom, isLastMoveTo, isCheckedKing, effect, showCaptureExplosion, onClick }: BoardCellProps) {
   const isLight = (row + col) % 2 === 0;
   const selectedPieceClass = isSelected ? 'piece-selected' : '';
   const checkedKingClass = isCheckedKing ? 'piece-check-target' : '';
@@ -38,9 +40,11 @@ export function BoardCell({ row, col, piece, isSelected, isCheckedKing, effect, 
 
   return (
     <div
-      className={`board-cell ${isLight ? 'cell-light' : 'cell-dark'} ${isSelected ? 'cell-selected' : ''} ${isCheckedKing ? 'cell-check-target' : ''}`}
+      className={`board-cell ${isLight ? 'cell-light' : 'cell-dark'} ${isSelected ? 'cell-selected' : ''} ${isLastMoveFrom ? 'cell-last-from' : ''} ${isLastMoveTo ? 'cell-last-to' : ''} ${isCheckedKing ? 'cell-check-target' : ''}`}
       onClick={() => onClick({ row, col })}
     >
+      {isLastMoveTo && <span className="last-move-beacon" aria-hidden="true">LAST</span>}
+      {isLastMoveFrom && <span className="last-move-tail" aria-hidden="true" />}
       {effect && (
         <div className={getEffectClass(effect)}>
           {effect.kind === 'capture' && <span className="capture-symbol">✕</span>}
