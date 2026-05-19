@@ -59,6 +59,7 @@ function App() {
                 selectedPos={state.selectedPos}
                 effects={state.effects}
                 captureEffect={state.captureEffect}
+                checkPlayer={state.checkPlayer}
                 onCellClick={handleCellClick}
               />
               <div className="player-tag p1-tag">
@@ -94,11 +95,11 @@ function App() {
       {state.gameOverWinner && (
         <div className="game-over-overlay">
           <div className="game-over-panel">
-            <div className="game-over-title">GAME SET</div>
+            <div className="game-over-title">CHECKMATE</div>
             <div className="game-over-winner">
               {state.gameOverWinner === 'black' ? '1P WIN!' : 'CPU WIN!'}
             </div>
-            <div className="game-over-text">玉を取りました。対局終了です。</div>
+            <div className="game-over-text">玉の逃げ場がありません。終局です。</div>
             <button className="retro-btn start-btn" onClick={handleRestart}>TITLE</button>
           </div>
         </div>
