@@ -1,19 +1,18 @@
 import { useState, useCallback, useEffect } from 'react';
 import { GameState, Position, EffectCell, CpuLevel, Piece, PieceType, Player, HandPieces } from '../types/shogi';
 import { createInitialBoard } from '../utils/initialBoard';
-import { getValidMoves, moveTouchesPromotionZone, mustPromote, promotePiece } from '../utils/moveRules';
+import { mustPromote, moveTouchesPromotionZone } from '../utils/moveRules';
 import { chooseCpuMove } from '../utils/cpuPlayer';
-
-function cloneBoard(board: GameState['board']): GameState['board'] {
-  return board.map(row => row.map(cell => cell ? { ...cell } : null));
-}
-
-function cloneHands(hands: HandPieces): HandPieces {
-  return {
-    black: [...hands.black],
-    white: [...hands.white],
-  };
-}
+import {
+  applyMoveToBoard,
+  canDropPiece,
+  cloneHands,
+  collectLegalMoves,
+  getCheckStatus,
+  getCheckmateWinner,
+  getDropEffects,
+  getLegalMoveEffects,
+} from '../utils/shogiEngine';
 
 function posEqual(a: Position | null, b: Position | null): boolean {
   if (!a || !b) return false;
@@ -28,6 +27,7 @@ function createInitialState(cpuLevel: CpuLevel = 'normal'): GameState {
     selectedHandPiece: null,
     effects: [],
     captureEffect: null,
+    checkPlayer: null,
     currentPlayer: 'black',
     gameOverWinner: null,
     moveCount: 0,
@@ -35,31 +35,6 @@ function createInitialState(cpuLevel: CpuLevel = 'normal'): GameState {
     cpuLevel,
     pendingPromotion: null,
   };
-}
-
-function canDropPiece(board: GameState['board'], pieceType: PieceType, player: Player, to: Position): boolean {
-  if (board[to.row][to.col]) return false;
-
-  if ((pieceType === 'pawn' || pieceType === 'lance') && (player === 'black' ? to.row === 0 : to.row === 8)) return false;
-  if (pieceType === 'knight' && (player === 'black' ? to.row <= 1 : to.row >= 7)) return false;
-
-  if (pieceType === 'pawn') {
-    return !board.some(row => row[to.col]?.player === player && row[to.col]?.type === 'pawn' && !row[to.col]?.promoted);
-  }
-
-  return true;
-}
-
-function getDropEffects(board: GameState['board'], pieceType: PieceType, player: Player): EffectCell[] {
-  const effects: EffectCell[] = [];
-  for (let row = 0; row < 9; row++) {
-    for (let col = 0; col < 9; col++) {
-      if (canDropPiece(board, pieceType, player, { row, col })) {
-        effects.push({ position: { row, col }, kind: 'flame', distance: 1 });
-      }
-    }
-  }
-  return effects;
 }
 
 function addCapturedPiece(hands: HandPieces, player: Player, capturedPiece: Piece | null): HandPieces {
@@ -76,22 +51,37 @@ function removeHandPiece(hands: HandPieces, player: Player, pieceType: PieceType
   return nextHands;
 }
 
-function movePiece(board: GameState['board'], from: Position, to: Position, promote: boolean): GameState['board'] {
-  const newBoard = cloneBoard(board);
-  const movingPiece = newBoard[from.row][from.col];
-  newBoard[to.row][to.col] = movingPiece && promote ? promotePiece(movingPiece) : movingPiece;
-  newBoard[from.row][from.col] = null;
-  return newBoard;
+function dropPieceToBoard(board: GameState['board'], pieceType: PieceType, player: Player, to: Position): GameState['board'] {
+  return applyMoveToBoard(board, { to, dropPiece: pieceType, promote: false }, player);
 }
 
-function dropPiece(board: GameState['board'], pieceType: PieceType, player: Player, to: Position): GameState['board'] {
-  const newBoard = cloneBoard(board);
-  newBoard[to.row][to.col] = { type: pieceType, player };
-  return newBoard;
+function movePieceOnBoard(board: GameState['board'], from: Position, to: Position, promote: boolean, player: Player): GameState['board'] {
+  return applyMoveToBoard(board, { from, to, promote }, player);
 }
 
-function isKingCaptured(piece: Piece | null): boolean {
-  return piece?.type === 'king';
+function applyPostMoveState(
+  prev: GameState,
+  board: GameState['board'],
+  hands: HandPieces,
+  nextPlayer: Player,
+  captureEffect: Position | null,
+  incrementMove = true,
+): GameState {
+  const winner = getCheckmateWinner(board, hands);
+  return {
+    ...prev,
+    board,
+    hands,
+    selectedPos: null,
+    selectedHandPiece: null,
+    effects: [],
+    captureEffect,
+    checkPlayer: winner ? null : getCheckStatus(board),
+    currentPlayer: winner ?? nextPlayer,
+    gameOverWinner: winner,
+    pendingPromotion: null,
+    moveCount: incrementMove ? prev.moveCount + 1 : prev.moveCount,
+  };
 }
 
 export function useShogi() {
@@ -106,21 +96,13 @@ export function useShogi() {
 
       if (selectedHandPiece) {
         const isValidDrop = effects.some(e => e.position.row === pos.row && e.position.col === pos.col);
-        if (!isValidDrop) {
+        if (!isValidDrop || !canDropPiece(board, selectedHandPiece, currentPlayer, pos)) {
           return { ...prev, selectedHandPiece: null, effects: [] };
         }
 
-        return {
-          ...prev,
-          board: dropPiece(board, selectedHandPiece, currentPlayer, pos),
-          hands: removeHandPiece(prev.hands, currentPlayer, selectedHandPiece),
-          selectedPos: null,
-          selectedHandPiece: null,
-          effects: [],
-          captureEffect: null,
-          currentPlayer: 'white',
-          moveCount: prev.moveCount + 1,
-        };
+        const nextBoard = dropPieceToBoard(board, selectedHandPiece, currentPlayer, pos);
+        const nextHands = removeHandPiece(prev.hands, currentPlayer, selectedHandPiece);
+        return applyPostMoveState(prev, nextBoard, nextHands, 'white', null);
       }
 
       if (selectedPos && posEqual(selectedPos, pos)) {
@@ -136,25 +118,13 @@ export function useShogi() {
         const capturedPiece = board[pos.row][pos.col];
         const handsAfterCapture = addCapturedPiece(prev.hands, currentPlayer, capturedPiece);
         const captureEffect = capturedPiece ? pos : null;
-        const winsByCapture = isKingCaptured(capturedPiece);
 
         if (mustPromote(movingPiece, pos)) {
-          return {
-            ...prev,
-            board: movePiece(board, selectedPos, pos, true),
-            hands: handsAfterCapture,
-            selectedPos: null,
-            selectedHandPiece: null,
-            effects: [],
-            captureEffect,
-            currentPlayer: winsByCapture ? currentPlayer : 'white',
-            gameOverWinner: winsByCapture ? currentPlayer : null,
-            pendingPromotion: null,
-            moveCount: prev.moveCount + 1,
-          };
+          const nextBoard = movePieceOnBoard(board, selectedPos, pos, true, currentPlayer);
+          return applyPostMoveState(prev, nextBoard, handsAfterCapture, 'white', captureEffect);
         }
 
-        if (!winsByCapture && moveTouchesPromotionZone(movingPiece, selectedPos, pos)) {
+        if (moveTouchesPromotionZone(movingPiece, selectedPos, pos)) {
           return {
             ...prev,
             hands: handsAfterCapture,
@@ -166,23 +136,12 @@ export function useShogi() {
           };
         }
 
-        return {
-          ...prev,
-          board: movePiece(board, selectedPos, pos, false),
-          hands: handsAfterCapture,
-          selectedPos: null,
-          selectedHandPiece: null,
-          effects: [],
-          captureEffect,
-          currentPlayer: winsByCapture ? currentPlayer : currentPlayer === 'black' ? 'white' : 'black',
-          gameOverWinner: winsByCapture ? currentPlayer : null,
-          pendingPromotion: null,
-          moveCount: prev.moveCount + 1,
-        };
+        const nextBoard = movePieceOnBoard(board, selectedPos, pos, false, currentPlayer);
+        return applyPostMoveState(prev, nextBoard, handsAfterCapture, 'white', captureEffect);
       }
 
       if (clickedPiece && clickedPiece.player === currentPlayer) {
-        const newEffects: EffectCell[] = getValidMoves(board, pos, clickedPiece);
+        const newEffects: EffectCell[] = getLegalMoveEffects(board, prev.hands, pos, clickedPiece);
         return { ...prev, selectedPos: pos, selectedHandPiece: null, effects: newEffects };
       }
 
@@ -194,11 +153,18 @@ export function useShogi() {
     setState(prev => {
       if (prev.gameOverWinner || prev.currentPlayer === 'white' || prev.pendingPromotion) return prev;
       const isAlreadySelected = prev.selectedHandPiece === pieceType;
+      const legalDropTargets = new Set(
+        collectLegalMoves(prev.board, prev.hands, 'black')
+          .filter(move => move.dropPiece === pieceType)
+          .map(move => `${move.to.row}-${move.to.col}`)
+      );
       return {
         ...prev,
         selectedPos: null,
         selectedHandPiece: isAlreadySelected ? null : pieceType,
-        effects: isAlreadySelected ? [] : getDropEffects(prev.board, pieceType, 'black'),
+        effects: isAlreadySelected
+          ? []
+          : getDropEffects(prev.board, pieceType, 'black').filter(effect => legalDropTargets.has(`${effect.position.row}-${effect.position.col}`)),
       };
     });
   }, []);
@@ -207,16 +173,10 @@ export function useShogi() {
     setState(prev => {
       if (!prev.pendingPromotion || prev.gameOverWinner) return prev;
 
-      return {
-        ...prev,
-        board: movePiece(prev.board, prev.pendingPromotion.from, prev.pendingPromotion.to, promote),
-        selectedPos: null,
-        selectedHandPiece: null,
-        effects: [],
-        pendingPromotion: null,
-        currentPlayer: 'white',
-        moveCount: prev.moveCount + 1,
-      };
+      const movingPiece = prev.board[prev.pendingPromotion.from.row][prev.pendingPromotion.from.col];
+      const safePromote = movingPiece ? promote || mustPromote(movingPiece, prev.pendingPromotion.to) : promote;
+      const nextBoard = movePieceOnBoard(prev.board, prev.pendingPromotion.from, prev.pendingPromotion.to, safePromote, 'black');
+      return applyPostMoveState(prev, nextBoard, prev.hands, 'white', prev.captureEffect, true);
     });
   }, []);
 
@@ -237,9 +197,12 @@ export function useShogi() {
 
         const cpuMove = chooseCpuMove(prev.board, prev.hands, prev.cpuLevel);
         if (!cpuMove) {
+          const winner = getCheckmateWinner(prev.board, prev.hands);
           return {
             ...prev,
-            currentPlayer: 'black',
+            currentPlayer: winner ?? 'black',
+            gameOverWinner: winner,
+            checkPlayer: winner ? null : getCheckStatus(prev.board),
             selectedPos: null,
             selectedHandPiece: null,
             effects: [],
@@ -247,37 +210,17 @@ export function useShogi() {
         }
 
         if (cpuMove.dropPiece) {
-          return {
-            ...prev,
-            board: dropPiece(prev.board, cpuMove.dropPiece, 'white', cpuMove.to),
-            hands: removeHandPiece(prev.hands, 'white', cpuMove.dropPiece),
-            selectedPos: null,
-            selectedHandPiece: null,
-            effects: [],
-            captureEffect: null,
-            currentPlayer: 'black',
-            moveCount: prev.moveCount + 1,
-          };
+          const nextBoard = dropPieceToBoard(prev.board, cpuMove.dropPiece, 'white', cpuMove.to);
+          const nextHands = removeHandPiece(prev.hands, 'white', cpuMove.dropPiece);
+          return applyPostMoveState(prev, nextBoard, nextHands, 'black', null);
         }
 
         if (!cpuMove.from) return prev;
 
         const capturedPiece = prev.board[cpuMove.to.row][cpuMove.to.col];
-        const winsByCapture = isKingCaptured(capturedPiece);
-
-        return {
-          ...prev,
-          board: movePiece(prev.board, cpuMove.from, cpuMove.to, cpuMove.promote),
-          hands: addCapturedPiece(prev.hands, 'white', capturedPiece),
-          selectedPos: null,
-          selectedHandPiece: null,
-          effects: [],
-          captureEffect: capturedPiece ? cpuMove.to : null,
-          currentPlayer: winsByCapture ? 'white' : 'black',
-          gameOverWinner: winsByCapture ? 'white' : null,
-          pendingPromotion: null,
-          moveCount: prev.moveCount + 1,
-        };
+        const nextBoard = movePieceOnBoard(prev.board, cpuMove.from, cpuMove.to, cpuMove.promote, 'white');
+        const nextHands = addCapturedPiece(prev.hands, 'white', capturedPiece);
+        return applyPostMoveState(prev, nextBoard, nextHands, 'black', capturedPiece ? cpuMove.to : null);
       });
     }, 450);
 
