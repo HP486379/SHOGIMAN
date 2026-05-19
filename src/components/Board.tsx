@@ -1,4 +1,4 @@
-import { BoardGrid, Position, EffectCell, Player } from '../types/shogi';
+import { BoardGrid, Position, EffectCell, Player, LastMove } from '../types/shogi';
 import { BoardCell } from './BoardCell';
 
 interface BoardProps {
@@ -7,6 +7,7 @@ interface BoardProps {
   effects: EffectCell[];
   captureEffect: Position | null;
   checkPlayer: Player | null;
+  lastMove: LastMove | null;
   onCellClick: (pos: Position) => void;
 }
 
@@ -17,7 +18,11 @@ function getEffect(effects: EffectCell[], row: number, col: number): EffectCell 
   return effects.find(e => e.position.row === row && e.position.col === col) ?? null;
 }
 
-export function Board({ board, selectedPos, effects, captureEffect, checkPlayer, onCellClick }: BoardProps) {
+function isSamePos(a: Position | null | undefined, row: number, col: number): boolean {
+  return !!a && a.row === row && a.col === col;
+}
+
+export function Board({ board, selectedPos, effects, captureEffect, checkPlayer, lastMove, onCellClick }: BoardProps) {
   return (
     <div className="board-wrapper">
       {checkPlayer && (
@@ -44,6 +49,8 @@ export function Board({ board, selectedPos, effects, captureEffect, checkPlayer,
                   isSelected={
                     selectedPos?.row === rIdx && selectedPos?.col === cIdx
                   }
+                  isLastMoveFrom={isSamePos(lastMove?.from, rIdx, cIdx)}
+                  isLastMoveTo={isSamePos(lastMove?.to, rIdx, cIdx)}
                   isCheckedKing={piece?.type === 'king' && piece.player === checkPlayer}
                   effect={getEffect(effects, rIdx, cIdx)}
                   showCaptureExplosion={
