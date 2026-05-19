@@ -47,6 +47,7 @@ export interface GameState {
   selectedHandPiece: PieceType | null;
   effects: EffectCell[];
   captureEffect: Position | null;
+  checkPlayer: Player | null;
   currentPlayer: Player;
   gameOverWinner: Player | null;
   moveCount: number;
