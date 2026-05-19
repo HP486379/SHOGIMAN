@@ -1,149 +1,141 @@
-import { BoardGrid, CpuLevel, HandPieces, Piece, PieceType, Player, Position } from '../types/shogi';
-import { getValidMoves, mustPromote, promotePiece, moveTouchesPromotionZone } from './moveRules';
+import { BoardGrid, CpuLevel, GameMove, HandPieces, PieceType, Player, Position } from '../types/shogi';
+import {
+  applyMoveToBoard,
+  collectLegalMoves,
+  getCheckmateWinner,
+  getCheckStatus,
+  getOpponent,
+  isKingInCheck,
+} from './shogiEngine';
 
-export interface CpuMove {
-  from?: Position;
-  to: Position;
-  dropPiece?: PieceType;
+export interface CpuMove extends GameMove {
   score: number;
-  promote: boolean;
 }
 
 const PIECE_VALUES: Record<PieceType, number> = {
-  king: 1000,
-  rook: 12,
-  bishop: 10,
-  gold: 7,
-  silver: 6,
-  knight: 4,
-  lance: 3,
-  pawn: 1,
+  king: 10000,
+  rook: 120,
+  bishop: 105,
+  gold: 72,
+  silver: 63,
+  knight: 42,
+  lance: 34,
+  pawn: 10,
 };
 
-function cloneBoard(board: BoardGrid): BoardGrid {
-  return board.map(row => row.map(cell => cell ? { ...cell } : null));
-}
-
-function getOpponent(player: Player): Player {
-  return player === 'black' ? 'white' : 'black';
-}
+const CASTLE_FILES = [2, 3, 4, 5, 6];
+const CENTRAL_FILES = [3, 4, 5];
 
 function randomItem<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)];
 }
 
-function shouldCpuPromote(piece: Piece, from: Position, to: Position): boolean {
-  return mustPromote(piece, to) || moveTouchesPromotionZone(piece, from, to);
+function distance(a: Position, b: Position): number {
+  return Math.abs(a.row - b.row) + Math.abs(a.col - b.col);
 }
 
-function canDropPiece(board: BoardGrid, pieceType: PieceType, player: Player, to: Position): boolean {
-  if (board[to.row][to.col]) return false;
-
-  if ((pieceType === 'pawn' || pieceType === 'lance') && (player === 'black' ? to.row === 0 : to.row === 8)) return false;
-  if (pieceType === 'knight' && (player === 'black' ? to.row <= 1 : to.row >= 7)) return false;
-
-  if (pieceType === 'pawn') {
-    return !board.some(row => row[to.col]?.player === player && row[to.col]?.type === 'pawn' && !row[to.col]?.promoted);
-  }
-
-  return true;
-}
-
-function collectDropMoves(board: BoardGrid, hands: HandPieces, player: Player): CpuMove[] {
-  const moves: CpuMove[] = [];
-  const uniqueHandPieces = Array.from(new Set(hands[player]));
-
-  for (const dropPiece of uniqueHandPieces) {
-    for (let row = 0; row < 9; row++) {
-      for (let col = 0; col < 9; col++) {
-        const to = { row, col };
-        if (canDropPiece(board, dropPiece, player, to)) {
-          moves.push({ to, dropPiece, score: 0, promote: false });
-        }
-      }
-    }
-  }
-
-  return moves;
-}
-
-function collectLegalMoves(board: BoardGrid, hands: HandPieces, player: Player): CpuMove[] {
-  const moves: CpuMove[] = [];
-
-  for (let row = 0; row < board.length; row++) {
-    for (let col = 0; col < board[row].length; col++) {
+function findPiece(board: BoardGrid, player: Player, pieceType: PieceType): Position | null {
+  for (let row = 0; row < 9; row++) {
+    for (let col = 0; col < 9; col++) {
       const piece = board[row][col];
-      if (!piece || piece.player !== player) continue;
-
-      const from = { row, col };
-      const validMoves = getValidMoves(board, from, piece);
-      for (const effect of validMoves) {
-        moves.push({
-          from,
-          to: effect.position,
-          score: 0,
-          promote: shouldCpuPromote(piece, from, effect.position),
-        });
-      }
+      if (piece?.player === player && piece.type === pieceType) return { row, col };
     }
   }
-
-  return [...moves, ...collectDropMoves(board, hands, player)];
+  return null;
 }
 
-function applyMove(board: BoardGrid, move: CpuMove, player: Player): BoardGrid {
-  const nextBoard = cloneBoard(board);
+function materialScore(board: BoardGrid, player: Player): number {
+  let score = 0;
+  for (const row of board) {
+    for (const piece of row) {
+      if (!piece) continue;
+      const value = PIECE_VALUES[piece.type] + (piece.promoted ? 18 : 0);
+      score += piece.player === player ? value : -value;
+    }
+  }
+  return score;
+}
+
+function handScore(hands: HandPieces, player: Player): number {
+  const opponent = getOpponent(player);
+  const own = hands[player].reduce((sum, pieceType) => sum + PIECE_VALUES[pieceType] * 0.75, 0);
+  const enemy = hands[opponent].reduce((sum, pieceType) => sum + PIECE_VALUES[pieceType] * 0.75, 0);
+  return own - enemy;
+}
+
+function positionalScore(board: BoardGrid, move: GameMove, player: Player): number {
+  const movingPiece = move.from ? board[move.from.row][move.from.col] : null;
+  const pieceType = move.dropPiece ?? movingPiece?.type;
+  if (!pieceType) return 0;
+
+  let score = 0;
+  const forwardProgress = player === 'white' ? move.to.row : 8 - move.to.row;
+  const centerDistance = Math.abs(move.to.row - 4) + Math.abs(move.to.col - 4);
+
+  if (CENTRAL_FILES.includes(move.to.col)) score += 4;
+  score += Math.max(0, 8 - centerDistance) * 1.3;
+
+  if (pieceType === 'pawn' || pieceType === 'silver' || pieceType === 'knight') {
+    score += forwardProgress * 1.8;
+  }
+
+  if (pieceType === 'rook' || pieceType === 'bishop') {
+    score += Math.max(0, 8 - centerDistance) * 2.2;
+  }
+
+  const ownKing = findPiece(board, player, 'king');
+  if (ownKing && (pieceType === 'gold' || pieceType === 'silver')) {
+    const before = move.from ? distance(move.from, ownKing) : 5;
+    const after = distance(move.to, ownKing);
+    if (CASTLE_FILES.includes(ownKing.col)) score += (before - after) * 4;
+  }
 
   if (move.dropPiece) {
-    nextBoard[move.to.row][move.to.col] = { type: move.dropPiece, player };
-    return nextBoard;
+    score += pieceType === 'pawn' ? 6 : 10;
   }
 
-  if (!move.from) return nextBoard;
-
-  const movingPiece = nextBoard[move.from.row][move.from.col];
-  nextBoard[move.to.row][move.to.col] = movingPiece && move.promote ? promotePiece(movingPiece) : movingPiece;
-  nextBoard[move.from.row][move.from.col] = null;
-  return nextBoard;
+  return score;
 }
 
-function isSquareAttacked(board: BoardGrid, hands: HandPieces, pos: Position, byPlayer: Player): boolean {
-  return collectLegalMoves(board, hands, byPlayer).some(
-    move => move.to.row === pos.row && move.to.col === pos.col
-  );
+function evaluateBoard(board: BoardGrid, hands: HandPieces, player: Player): number {
+  let score = materialScore(board, player) + handScore(hands, player);
+  const opponent = getOpponent(player);
+
+  if (isKingInCheck(board, opponent)) score += 85;
+  if (isKingInCheck(board, player)) score -= 140;
+
+  const mateWinner = getCheckmateWinner(board, hands);
+  if (mateWinner === player) score += 100000;
+  if (mateWinner === opponent) score -= 100000;
+
+  return score;
 }
 
-function evaluateMove(board: BoardGrid, hands: HandPieces, move: CpuMove, player: Player, level: CpuLevel): number {
+function evaluateMove(board: BoardGrid, hands: HandPieces, move: GameMove, player: Player, level: CpuLevel): number {
   const movingPiece = move.from ? board[move.from.row][move.from.col] : null;
   const targetPiece = board[move.to.row][move.to.col];
-  let score = Math.random();
+  const opponent = getOpponent(player);
+  let score = Math.random() * (level === 'hard' ? 0.2 : 4);
 
   if (targetPiece) {
-    score += PIECE_VALUES[targetPiece.type] * 100;
-    if (movingPiece) score -= PIECE_VALUES[movingPiece.type] * 2;
-  }
-
-  if (move.dropPiece) {
-    score += PIECE_VALUES[move.dropPiece] * 8;
+    score += PIECE_VALUES[targetPiece.type] * 14;
+    if (movingPiece) score -= PIECE_VALUES[movingPiece.type] * 0.8;
   }
 
   if (move.promote && movingPiece) {
-    score += movingPiece.type === 'rook' || movingPiece.type === 'bishop' ? 50 : 25;
+    score += movingPiece.type === 'rook' || movingPiece.type === 'bishop' ? 95 : 38;
   }
 
-  if (level === 'easy') return score;
+  score += positionalScore(board, move, player);
 
-  const nextBoard = applyMove(board, move, player);
-  const opponent = getOpponent(player);
+  const nextBoard = applyMoveToBoard(board, move, player);
 
-  if (movingPiece && isSquareAttacked(nextBoard, hands, move.to, opponent)) {
-    score -= PIECE_VALUES[movingPiece.type] * 45;
+  if (getCheckmateWinner(nextBoard, hands) === player) score += 90000;
+  if (getCheckStatus(nextBoard) === opponent) score += 220;
+
+  if (movingPiece && isKingInCheck(nextBoard, player)) {
+    score -= 99999;
   }
-
-  if (level === 'normal') return score;
-
-  const centerDistance = Math.abs(move.to.row - 4) + Math.abs(move.to.col - 4);
-  score += (8 - centerDistance) * 4;
 
   const opponentReplies = collectLegalMoves(nextBoard, hands, opponent);
   const biggestOpponentCapture = opponentReplies.reduce((max, reply) => {
@@ -153,7 +145,15 @@ function evaluateMove(board: BoardGrid, hands: HandPieces, move: CpuMove, player
       : max;
   }, 0);
 
-  score -= biggestOpponentCapture * 30;
+  score -= biggestOpponentCapture * (level === 'hard' ? 9 : 5);
+  score += evaluateBoard(nextBoard, hands, player) * (level === 'hard' ? 0.7 : 0.35);
+
+  if (level === 'hard') {
+    const bestOpponentReply = opponentReplies
+      .map(reply => evaluateBoard(applyMoveToBoard(nextBoard, reply, opponent), hands, player))
+      .sort((a, b) => a - b)[0] ?? 0;
+    score += bestOpponentReply * 0.35;
+  }
 
   return score;
 }
@@ -163,7 +163,9 @@ export function chooseCpuMove(board: BoardGrid, hands: HandPieces, level: CpuLev
   if (moves.length === 0) return null;
 
   if (level === 'easy') {
-    return randomItem(moves);
+    const scored = moves.map(move => ({ ...move, score: evaluateMove(board, hands, move, 'white', 'easy') }));
+    scored.sort((a, b) => b.score - a.score);
+    return randomItem(scored.slice(0, Math.min(8, scored.length)));
   }
 
   const scoredMoves = moves.map(move => ({
@@ -174,7 +176,7 @@ export function chooseCpuMove(board: BoardGrid, hands: HandPieces, level: CpuLev
   scoredMoves.sort((a, b) => b.score - a.score);
 
   if (level === 'normal') {
-    return randomItem(scoredMoves.slice(0, Math.min(5, scoredMoves.length)));
+    return randomItem(scoredMoves.slice(0, Math.min(3, scoredMoves.length)));
   }
 
   return scoredMoves[0];
