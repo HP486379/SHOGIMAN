@@ -39,7 +39,7 @@
   z-index: 3;
   box-sizing: border-box;
   border: 3px solid #ffea4a;
-  border-radius: 8px;
+  border-radius: 7px;
   background: rgba(255, 238, 70, 0.13);
   box-shadow:
     0 0 10px #fff266,
@@ -57,18 +57,18 @@
 .guide-highlight-bishop,
 .guide-highlight-rook,
 .guide-highlight-king {
-  width: 44.8%;
-  height: 17.2%;
+  width: 44.9%;
+  height: 18.9%;
 }
 
-.guide-highlight-pawn { left: 4.8%; top: 18.2%; }
-.guide-highlight-lance { left: 50.5%; top: 18.2%; }
-.guide-highlight-knight { left: 4.8%; top: 36.3%; }
-.guide-highlight-silver { left: 50.5%; top: 36.3%; }
-.guide-highlight-gold { left: 4.8%; top: 54.2%; }
-.guide-highlight-bishop { left: 50.5%; top: 54.2%; }
-.guide-highlight-rook { left: 4.8%; top: 72.2%; }
-.guide-highlight-king { left: 50.5%; top: 72.2%; }
+.guide-highlight-pawn { left: 5.1%; top: 15.9%; }
+.guide-highlight-lance { left: 51.4%; top: 15.9%; }
+.guide-highlight-knight { left: 5.1%; top: 36.2%; }
+.guide-highlight-silver { left: 51.4%; top: 36.2%; }
+.guide-highlight-gold { left: 5.1%; top: 56.4%; }
+.guide-highlight-bishop { left: 51.4%; top: 56.4%; }
+.guide-highlight-rook { left: 5.1%; top: 76.7%; }
+.guide-highlight-king { left: 51.4%; top: 76.7%; }
 
 @keyframes unit-guide-pulse {
   0%, 100% {
