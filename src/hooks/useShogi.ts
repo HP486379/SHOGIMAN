@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { GameState, Position, EffectCell, CpuLevel, Piece, PieceType, Player, HandPieces } from '../types/shogi';
+import { GameState, Position, EffectCell, CpuLevel, Piece, PieceType, Player, HandPieces, LastMove } from '../types/shogi';
 import { createInitialBoard } from '../utils/initialBoard';
 import { mustPromote, moveTouchesPromotionZone } from '../utils/moveRules';
 import { chooseCpuMove } from '../utils/cpuPlayer';
@@ -19,7 +19,12 @@ function posEqual(a: Position | null, b: Position | null): boolean {
   return a.row === b.row && a.col === b.col;
 }
 
+function randomFirstPlayer(): Player {
+  return Math.random() < 0.5 ? 'black' : 'white';
+}
+
 function createInitialState(cpuLevel: CpuLevel = 'normal'): GameState {
+  const firstPlayer = randomFirstPlayer();
   return {
     board: createInitialBoard(),
     hands: { black: [], white: [] },
@@ -28,7 +33,9 @@ function createInitialState(cpuLevel: CpuLevel = 'normal'): GameState {
     effects: [],
     captureEffect: null,
     checkPlayer: null,
-    currentPlayer: 'black',
+    currentPlayer: firstPlayer,
+    firstPlayer,
+    lastMove: null,
     gameOverWinner: null,
     moveCount: 0,
     seEnabled: true,
@@ -65,6 +72,7 @@ function applyPostMoveState(
   hands: HandPieces,
   nextPlayer: Player,
   captureEffect: Position | null,
+  lastMove: LastMove,
   incrementMove = true,
 ): GameState {
   const winner = getCheckmateWinner(board, hands);
@@ -80,6 +88,7 @@ function applyPostMoveState(
     currentPlayer: winner ?? nextPlayer,
     gameOverWinner: winner,
     pendingPromotion: null,
+    lastMove,
     moveCount: incrementMove ? prev.moveCount + 1 : prev.moveCount,
   };
 }
@@ -102,7 +111,7 @@ export function useShogi() {
 
         const nextBoard = dropPieceToBoard(board, selectedHandPiece, currentPlayer, pos);
         const nextHands = removeHandPiece(prev.hands, currentPlayer, selectedHandPiece);
-        return applyPostMoveState(prev, nextBoard, nextHands, 'white', null);
+        return applyPostMoveState(prev, nextBoard, nextHands, 'white', null, { from: null, to: pos, player: currentPlayer });
       }
 
       if (selectedPos && posEqual(selectedPos, pos)) {
@@ -121,7 +130,7 @@ export function useShogi() {
 
         if (mustPromote(movingPiece, pos)) {
           const nextBoard = movePieceOnBoard(board, selectedPos, pos, true, currentPlayer);
-          return applyPostMoveState(prev, nextBoard, handsAfterCapture, 'white', captureEffect);
+          return applyPostMoveState(prev, nextBoard, handsAfterCapture, 'white', captureEffect, { from: selectedPos, to: pos, player: currentPlayer });
         }
 
         if (moveTouchesPromotionZone(movingPiece, selectedPos, pos)) {
@@ -137,7 +146,7 @@ export function useShogi() {
         }
 
         const nextBoard = movePieceOnBoard(board, selectedPos, pos, false, currentPlayer);
-        return applyPostMoveState(prev, nextBoard, handsAfterCapture, 'white', captureEffect);
+        return applyPostMoveState(prev, nextBoard, handsAfterCapture, 'white', captureEffect, { from: selectedPos, to: pos, player: currentPlayer });
       }
 
       if (clickedPiece && clickedPiece.player === currentPlayer) {
@@ -176,7 +185,15 @@ export function useShogi() {
       const movingPiece = prev.board[prev.pendingPromotion.from.row][prev.pendingPromotion.from.col];
       const safePromote = movingPiece ? promote || mustPromote(movingPiece, prev.pendingPromotion.to) : promote;
       const nextBoard = movePieceOnBoard(prev.board, prev.pendingPromotion.from, prev.pendingPromotion.to, safePromote, 'black');
-      return applyPostMoveState(prev, nextBoard, prev.hands, 'white', prev.captureEffect, true);
+      return applyPostMoveState(
+        prev,
+        nextBoard,
+        prev.hands,
+        'white',
+        prev.captureEffect,
+        { from: prev.pendingPromotion.from, to: prev.pendingPromotion.to, player: 'black' },
+        true,
+      );
     });
   }, []);
 
@@ -212,7 +229,7 @@ export function useShogi() {
         if (cpuMove.dropPiece) {
           const nextBoard = dropPieceToBoard(prev.board, cpuMove.dropPiece, 'white', cpuMove.to);
           const nextHands = removeHandPiece(prev.hands, 'white', cpuMove.dropPiece);
-          return applyPostMoveState(prev, nextBoard, nextHands, 'black', null);
+          return applyPostMoveState(prev, nextBoard, nextHands, 'black', null, { from: null, to: cpuMove.to, player: 'white' });
         }
 
         if (!cpuMove.from) return prev;
@@ -220,7 +237,7 @@ export function useShogi() {
         const capturedPiece = prev.board[cpuMove.to.row][cpuMove.to.col];
         const nextBoard = movePieceOnBoard(prev.board, cpuMove.from, cpuMove.to, cpuMove.promote, 'white');
         const nextHands = addCapturedPiece(prev.hands, 'white', capturedPiece);
-        return applyPostMoveState(prev, nextBoard, nextHands, 'black', capturedPiece ? cpuMove.to : null);
+        return applyPostMoveState(prev, nextBoard, nextHands, 'black', capturedPiece ? cpuMove.to : null, { from: cpuMove.from, to: cpuMove.to, player: 'white' });
       });
     }, 450);
 
