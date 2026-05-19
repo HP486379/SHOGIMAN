@@ -1,5 +1,6 @@
-import { BoardGrid, CpuLevel, GameMove, HandPieces, PieceType, Player, Position } from '../types/shogi';
+import { BoardGrid, CpuLevel, HandPieces, PieceType, Player, Position } from '../types/shogi';
 import {
+  GameMove,
   applyMoveToBoard,
   collectLegalMoves,
   getCheckmateWinner,
