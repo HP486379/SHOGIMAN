@@ -7,6 +7,7 @@ import { Controls } from './components/Controls';
 import { OpeningScreen } from './components/OpeningScreen';
 import { PieceStand } from './components/PieceStand';
 import { UnitGuide } from './components/UnitGuide';
+import { retroAudioEngine } from './utils/audioEngine';
 
 function App() {
   const [hasStarted, setHasStarted] = useState(false);
@@ -20,9 +21,25 @@ function App() {
   const cpuTurnRole = state.firstPlayer === 'white' ? 'SENTE' : 'GOTE';
   const p1TurnRole = state.firstPlayer === 'black' ? 'SENTE' : 'GOTE';
 
+  const handleStart = () => {
+    setHasStarted(true);
+    if (state.seEnabled) {
+      void retroAudioEngine.start();
+    }
+  };
+
   const handleRestart = () => {
+    retroAudioEngine.stop();
     reset();
     setHasStarted(false);
+  };
+
+  const handleToggleSE = () => {
+    const nextEnabled = !state.seEnabled;
+    toggleSE();
+    if (hasStarted) {
+      retroAudioEngine.toggle(nextEnabled);
+    }
   };
 
   return (
@@ -33,7 +50,7 @@ function App() {
           cpuLevel={state.cpuLevel}
           firstPlayer={state.firstPlayer}
           onCpuLevelChange={setCpuLevel}
-          onStart={() => setHasStarted(true)}
+          onStart={handleStart}
         />
       ) : (
         <div className="game-layout">
@@ -43,7 +60,7 @@ function App() {
               currentPlayer={state.currentPlayer}
               firstTurnText={firstTurnText}
               seEnabled={state.seEnabled}
-              onToggleSE={toggleSE}
+              onToggleSE={handleToggleSE}
               onReset={reset}
             />
             <main className="main-area">
