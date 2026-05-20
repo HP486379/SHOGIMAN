@@ -1,5 +1,7 @@
 type OscType = OscillatorType;
 
+type RetroSfx = 'select' | 'move' | 'capture' | 'drop' | 'check' | 'checkmate' | 'promote';
+
 interface NoteEvent {
   step: number;
   note: string | null;
@@ -80,6 +82,8 @@ const BASS: NoteEvent[] = [
 class RetroAudioEngine {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
+  private bgmGain: GainNode | null = null;
+  private sfxGain: GainNode | null = null;
   private timers: number[] = [];
   private isPlaying = false;
   private stepSeconds = 0.145;
@@ -91,7 +95,13 @@ class RetroAudioEngine {
       if (!AudioCtx) return null;
       this.ctx = new AudioCtx();
       this.master = this.ctx.createGain();
-      this.master.gain.value = 0.16;
+      this.bgmGain = this.ctx.createGain();
+      this.sfxGain = this.ctx.createGain();
+      this.master.gain.value = 0.88;
+      this.bgmGain.gain.value = 0.16;
+      this.sfxGain.gain.value = 0.42;
+      this.bgmGain.connect(this.master);
+      this.sfxGain.connect(this.master);
       this.master.connect(this.ctx.destination);
     }
     return this.ctx;
@@ -116,6 +126,48 @@ class RetroAudioEngine {
       void this.start();
     } else {
       this.stop();
+    }
+  }
+
+  playSfx(kind: RetroSfx) {
+    const ctx = this.ensureContext();
+    if (!ctx || !this.sfxGain) return;
+    const now = ctx.currentTime;
+    if (ctx.state === 'suspended') void ctx.resume();
+
+    switch (kind) {
+      case 'select':
+        this.playToneTo(this.sfxGain, 'C5', now, 0.035, 0.13, 'square');
+        this.playToneTo(this.sfxGain, 'G5', now + 0.035, 0.045, 0.10, 'square');
+        break;
+      case 'move':
+        this.playClick(now);
+        this.playToneTo(this.sfxGain, 'A4', now + 0.015, 0.045, 0.12, 'square');
+        break;
+      case 'drop':
+        this.playClick(now);
+        this.playToneTo(this.sfxGain, 'E4', now + 0.025, 0.06, 0.13, 'square');
+        this.playNoiseTo(this.sfxGain, now, 0.035, 0.08, 3000, 'highpass');
+        break;
+      case 'capture':
+        this.playExplosion(now);
+        break;
+      case 'promote':
+        this.playToneTo(this.sfxGain, 'E4', now, 0.055, 0.13, 'square');
+        this.playToneTo(this.sfxGain, 'A4', now + 0.055, 0.055, 0.13, 'square');
+        this.playToneTo(this.sfxGain, 'C5', now + 0.11, 0.11, 0.12, 'square');
+        break;
+      case 'check':
+        this.playToneTo(this.sfxGain, 'C5', now, 0.08, 0.16, 'square');
+        this.playToneTo(this.sfxGain, 'G4', now + 0.08, 0.1, 0.14, 'square');
+        this.playNoiseTo(this.sfxGain, now + 0.02, 0.12, 0.06, 900, 'bandpass');
+        break;
+      case 'checkmate':
+        this.playExplosion(now);
+        this.playToneTo(this.sfxGain, 'C4', now + 0.18, 0.18, 0.16, 'square');
+        this.playToneTo(this.sfxGain, 'G3', now + 0.36, 0.24, 0.15, 'triangle');
+        this.playToneTo(this.sfxGain, 'C3', now + 0.6, 0.36, 0.14, 'triangle');
+        break;
     }
   }
 
@@ -147,7 +199,12 @@ class RetroAudioEngine {
   }
 
   private playTone(note: string, time: number, duration: number, volume: number, type: OscType) {
-    if (!this.ctx || !this.master) return;
+    if (!this.bgmGain) return;
+    this.playToneTo(this.bgmGain, note, time, duration, volume, type);
+  }
+
+  private playToneTo(destination: AudioNode, note: string, time: number, duration: number, volume: number, type: OscType) {
+    if (!this.ctx) return;
     const freq = NOTE_FREQ[note];
     if (!freq) return;
 
@@ -157,17 +214,45 @@ class RetroAudioEngine {
     osc.type = type;
     osc.frequency.setValueAtTime(freq, time);
     gain.gain.setValueAtTime(0.0001, time);
-    gain.gain.exponentialRampToValueAtTime(volume, time + 0.012);
+    gain.gain.exponentialRampToValueAtTime(volume, time + 0.006);
     gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
 
     osc.connect(gain);
-    gain.connect(this.master);
+    gain.connect(destination);
     osc.start(time);
     osc.stop(time + duration + 0.04);
   }
 
+  private playClick(time: number) {
+    if (!this.sfxGain) return;
+    this.playNoiseTo(this.sfxGain, time, 0.018, 0.13, 5200, 'highpass');
+    this.playToneTo(this.sfxGain, 'C5', time, 0.025, 0.08, 'square');
+  }
+
+  private playExplosion(time: number) {
+    if (!this.ctx || !this.sfxGain) return;
+    this.playNoiseTo(this.sfxGain, time, 0.28, 0.34, 220, 'lowpass');
+    this.playNoiseTo(this.sfxGain, time + 0.035, 0.18, 0.2, 900, 'bandpass');
+    this.playBoomTone(time);
+  }
+
+  private playBoomTone(time: number) {
+    if (!this.ctx || !this.sfxGain) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(96, time);
+    osc.frequency.exponentialRampToValueAtTime(28, time + 0.32);
+    gain.gain.setValueAtTime(0.28, time);
+    gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.34);
+    osc.connect(gain);
+    gain.connect(this.sfxGain);
+    osc.start(time);
+    osc.stop(time + 0.38);
+  }
+
   private playKick(time: number) {
-    if (!this.ctx || !this.master) return;
+    if (!this.ctx || !this.bgmGain) return;
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = 'square';
@@ -176,22 +261,24 @@ class RetroAudioEngine {
     gain.gain.setValueAtTime(0.12, time);
     gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.1);
     osc.connect(gain);
-    gain.connect(this.master);
+    gain.connect(this.bgmGain);
     osc.start(time);
     osc.stop(time + 0.12);
   }
 
   private playSnare(time: number) {
-    this.playNoise(time, 0.07, 0.07, 1200);
+    if (!this.bgmGain) return;
+    this.playNoiseTo(this.bgmGain, time, 0.07, 0.07, 1200, 'highpass');
   }
 
   private playHiHat(time: number) {
-    this.playNoise(time, 0.018, 0.025, 4200);
+    if (!this.bgmGain) return;
+    this.playNoiseTo(this.bgmGain, time, 0.018, 0.025, 4200, 'highpass');
   }
 
-  private playNoise(time: number, duration: number, volume: number, cutoff: number) {
-    if (!this.ctx || !this.master) return;
-    const bufferSize = this.ctx.sampleRate * duration;
+  private playNoiseTo(destination: AudioNode, time: number, duration: number, volume: number, cutoff: number, filterType: BiquadFilterType) {
+    if (!this.ctx) return;
+    const bufferSize = Math.floor(this.ctx.sampleRate * duration);
     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
@@ -200,15 +287,16 @@ class RetroAudioEngine {
     const filter = this.ctx.createBiquadFilter();
     const gain = this.ctx.createGain();
 
-    filter.type = 'highpass';
+    filter.type = filterType;
     filter.frequency.setValueAtTime(cutoff, time);
+    filter.Q.setValueAtTime(filterType === 'bandpass' ? 1.2 : 0.7, time);
     gain.gain.setValueAtTime(volume, time);
     gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
 
     source.buffer = buffer;
     source.connect(filter);
     filter.connect(gain);
-    gain.connect(this.master);
+    gain.connect(destination);
     source.start(time);
   }
 }
