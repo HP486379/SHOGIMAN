@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { PieceType } from './types/shogi';
+import { useEffect, useRef, useState } from 'react';
+import { PieceType, Player } from './types/shogi';
 import { useShogi } from './hooks/useShogi';
 import { Header } from './components/Header';
 import { Board } from './components/Board';
@@ -11,6 +11,9 @@ import { retroAudioEngine } from './utils/audioEngine';
 
 function App() {
   const [hasStarted, setHasStarted] = useState(false);
+  const lastMoveCountRef = useRef(0);
+  const previousCheckPlayerRef = useRef<Player | null>(null);
+  const previousWinnerRef = useRef<Player | null>(null);
   const { state, handleCellClick, selectHandPiece, answerPromotion, reset, toggleSE, setCpuLevel } = useShogi();
 
   const selectedBoardPiece = state.selectedPos
@@ -21,10 +24,40 @@ function App() {
   const cpuTurnRole = state.firstPlayer === 'white' ? 'SENTE' : 'GOTE';
   const p1TurnRole = state.firstPlayer === 'black' ? 'SENTE' : 'GOTE';
 
+  useEffect(() => {
+    if (!hasStarted || !state.seEnabled) return;
+
+    if (state.moveCount > lastMoveCountRef.current) {
+      if (state.captureEffect) {
+        retroAudioEngine.playSfx('capture');
+      } else if (state.lastMove?.from === null) {
+        retroAudioEngine.playSfx('drop');
+      } else {
+        retroAudioEngine.playSfx('move');
+      }
+      lastMoveCountRef.current = state.moveCount;
+    }
+
+    if (state.checkPlayer && state.checkPlayer !== previousCheckPlayerRef.current) {
+      retroAudioEngine.playSfx('check');
+    }
+    previousCheckPlayerRef.current = state.checkPlayer;
+
+    if (state.gameOverWinner && state.gameOverWinner !== previousWinnerRef.current) {
+      retroAudioEngine.playSfx('checkmate');
+      retroAudioEngine.stop();
+    }
+    previousWinnerRef.current = state.gameOverWinner;
+  }, [hasStarted, state.captureEffect, state.checkPlayer, state.gameOverWinner, state.lastMove, state.moveCount, state.seEnabled]);
+
   const handleStart = () => {
     setHasStarted(true);
+    lastMoveCountRef.current = 0;
+    previousCheckPlayerRef.current = null;
+    previousWinnerRef.current = null;
     if (state.seEnabled) {
       void retroAudioEngine.start();
+      retroAudioEngine.playSfx('select');
     }
   };
 
@@ -32,6 +65,9 @@ function App() {
     retroAudioEngine.stop();
     reset();
     setHasStarted(false);
+    lastMoveCountRef.current = 0;
+    previousCheckPlayerRef.current = null;
+    previousWinnerRef.current = null;
   };
 
   const handleToggleSE = () => {
@@ -39,6 +75,7 @@ function App() {
     toggleSE();
     if (hasStarted) {
       retroAudioEngine.toggle(nextEnabled);
+      if (nextEnabled) retroAudioEngine.playSfx('select');
     }
   };
 
