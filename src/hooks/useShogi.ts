@@ -122,8 +122,11 @@ export function useShogi() {
         e => e.position.row === pos.row && e.position.col === pos.col
       );
 
-      if (existingEffect && selectedPos) {
-        const movingPiece = board[selectedPos.row][selectedPos.col] as Piece;
+      const selectedPiece = selectedPos ? board[selectedPos.row][selectedPos.col] : null;
+      const isPlayableSelection = selectedPiece?.player === currentPlayer;
+
+      if (existingEffect && selectedPos && isPlayableSelection) {
+        const movingPiece = selectedPiece as Piece;
         const capturedPiece = board[pos.row][pos.col];
         const handsAfterCapture = addCapturedPiece(prev.hands, currentPlayer, capturedPiece);
         const captureEffect = capturedPiece ? pos : null;
@@ -149,7 +152,7 @@ export function useShogi() {
         return applyPostMoveState(prev, nextBoard, handsAfterCapture, 'white', captureEffect, { from: selectedPos, to: pos, player: currentPlayer });
       }
 
-      if (clickedPiece && clickedPiece.player === currentPlayer) {
+      if (clickedPiece) {
         const newEffects: EffectCell[] = getLegalMoveEffects(board, prev.hands, pos, clickedPiece);
         return { ...prev, selectedPos: pos, selectedHandPiece: null, effects: newEffects };
       }
