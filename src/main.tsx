@@ -8,6 +8,7 @@ import './battlefield.css';
 import './unitGuide.css';
 import './checkEffects.css';
 import './uxFixes.css';
+import './aiAdvisor.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
