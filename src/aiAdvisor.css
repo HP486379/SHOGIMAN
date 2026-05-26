@@ -1,3 +1,22 @@
+.game-layout {
+  width: min(100vw - 24px, 1640px) !important;
+  max-width: 1640px !important;
+  grid-template-columns: 360px minmax(720px, 780px) minmax(390px, 430px) !important;
+  justify-content: center !important;
+  align-items: start !important;
+  gap: 24px !important;
+}
+
+.game-layout > .app-content {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.game-layout > .side-panel {
+  grid-column: 3;
+  grid-row: 1;
+}
+
 .ai-advisor {
   width: 100%;
   max-width: 430px;
@@ -18,11 +37,10 @@
   grid-column: 1;
   grid-row: 1;
   align-self: start;
-  justify-self: start;
+  justify-self: end;
   width: 360px;
   max-width: 360px;
-  margin-top: 310px;
-  margin-left: -390px;
+  margin: 310px 0 0 0;
 }
 
 .ai-advisor-alert {
@@ -117,10 +135,15 @@
 }
 
 @media (max-width: 1500px) {
+  .game-layout {
+    grid-template-columns: 300px minmax(680px, 720px) minmax(360px, 390px) !important;
+    gap: 18px !important;
+  }
+
   .game-layout > .ai-advisor {
-    width: 330px;
-    max-width: 330px;
-    margin-left: -350px;
+    width: 300px;
+    max-width: 300px;
+    margin-top: 300px;
   }
 
   .ai-advisor-summary {
@@ -132,10 +155,22 @@
   }
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1320px) {
+  .game-layout {
+    grid-template-columns: 1fr !important;
+    justify-items: center !important;
+    width: min(100vw - 24px, 780px) !important;
+    max-width: 780px !important;
+  }
+
+  .game-layout > .app-content,
+  .game-layout > .side-panel,
   .game-layout > .ai-advisor {
     grid-column: 1;
     grid-row: auto;
+  }
+
+  .game-layout > .ai-advisor {
     width: min(100%, 520px);
     max-width: 520px;
     margin: 0;
