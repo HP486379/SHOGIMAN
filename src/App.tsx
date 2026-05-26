@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { PieceType, Player } from './types/shogi';
+import { AdvisorLanguage } from './utils/aiAdvisor';
 import { useShogi } from './hooks/useShogi';
 import { Header } from './components/Header';
 import { Board } from './components/Board';
@@ -12,6 +13,7 @@ import { retroAudioEngine } from './utils/audioEngine';
 
 function App() {
   const [hasStarted, setHasStarted] = useState(false);
+  const [advisorLanguage, setAdvisorLanguage] = useState<AdvisorLanguage>('ja');
   const lastMoveCountRef = useRef(0);
   const previousCheckPlayerRef = useRef<Player | null>(null);
   const previousWinnerRef = useRef<Player | null>(null);
@@ -139,15 +141,17 @@ function App() {
           </div>
           <aside className="side-panel">
             <UnitGuide activePieceType={activeGuidePieceType} />
-            <AiAdvisor
-              board={state.board}
-              hands={state.hands}
-              currentPlayer={state.currentPlayer}
-              checkPlayer={state.checkPlayer}
-              lastMovePlayer={state.lastMove?.player ?? null}
-            />
             <Controls cpuLevel={state.cpuLevel} onCpuLevelChange={setCpuLevel} />
           </aside>
+          <AiAdvisor
+            board={state.board}
+            hands={state.hands}
+            currentPlayer={state.currentPlayer}
+            checkPlayer={state.checkPlayer}
+            lastMovePlayer={state.lastMove?.player ?? null}
+            language={advisorLanguage}
+            onLanguageChange={setAdvisorLanguage}
+          />
         </div>
       )}
       {state.pendingPromotion && (
