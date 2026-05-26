@@ -1,0 +1,102 @@
+.ai-advisor {
+  width: 100%;
+  max-width: 430px;
+  box-sizing: border-box;
+  padding: 14px 16px;
+  border: 2px solid #00c8ff;
+  border-radius: 6px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(0, 200, 255, 0.18), transparent 34%),
+    linear-gradient(180deg, rgba(2, 13, 24, 0.96), rgba(4, 7, 14, 0.96));
+  color: #bfefff;
+  box-shadow:
+    0 0 12px rgba(0, 180, 255, 0.45),
+    inset 0 0 18px rgba(0, 180, 255, 0.08);
+}
+
+.ai-advisor-alert {
+  border-color: #ff3c00;
+  box-shadow:
+    0 0 14px rgba(255, 60, 0, 0.72),
+    inset 0 0 18px rgba(255, 80, 0, 0.12);
+}
+
+.ai-advisor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.ai-advisor-title {
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  font-size: 9px;
+  color: #00d8ff;
+  text-shadow: 0 0 8px rgba(0, 220, 255, 0.8);
+}
+
+.ai-advisor-alert .ai-advisor-title {
+  color: #ffdd55;
+  text-shadow: 0 0 8px rgba(255, 80, 0, 0.9);
+}
+
+.ai-advisor-score {
+  flex: 0 0 auto;
+  padding: 4px 6px;
+  border: 1px solid #ffee55;
+  border-radius: 3px;
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  font-size: 6px;
+  color: #ffee55;
+  background: rgba(30, 24, 0, 0.82);
+  text-shadow: 0 0 6px rgba(255, 220, 0, 0.8);
+}
+
+.ai-advisor-summary {
+  margin: 0 0 10px;
+  font-size: 11px;
+  line-height: 1.75;
+  color: #e7fbff;
+}
+
+.ai-advisor-list {
+  margin: 0;
+  padding-left: 16px;
+  display: grid;
+  gap: 7px;
+}
+
+.ai-advisor-list li {
+  font-size: 10px;
+  line-height: 1.7;
+  color: #c6eaff;
+}
+
+.ai-advisor-list li::marker {
+  color: #00d8ff;
+}
+
+@media (max-width: 1180px) {
+  .ai-advisor {
+    max-width: 520px;
+  }
+}
+
+@media (max-width: 620px) {
+  .ai-advisor {
+    padding: 12px;
+  }
+
+  .ai-advisor-title {
+    font-size: 7px;
+  }
+
+  .ai-advisor-summary {
+    font-size: 10px;
+  }
+
+  .ai-advisor-list li {
+    font-size: 9px;
+  }
+}
