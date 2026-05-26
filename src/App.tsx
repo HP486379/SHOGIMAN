@@ -7,6 +7,7 @@ import { Controls } from './components/Controls';
 import { OpeningScreen } from './components/OpeningScreen';
 import { PieceStand } from './components/PieceStand';
 import { UnitGuide } from './components/UnitGuide';
+import { AiAdvisor } from './components/AiAdvisor';
 import { retroAudioEngine } from './utils/audioEngine';
 
 function App() {
@@ -138,6 +139,13 @@ function App() {
           </div>
           <aside className="side-panel">
             <UnitGuide activePieceType={activeGuidePieceType} />
+            <AiAdvisor
+              board={state.board}
+              hands={state.hands}
+              currentPlayer={state.currentPlayer}
+              checkPlayer={state.checkPlayer}
+              lastMovePlayer={state.lastMove?.player ?? null}
+            />
             <Controls cpuLevel={state.cpuLevel} onCpuLevelChange={setCpuLevel} />
           </aside>
         </div>
