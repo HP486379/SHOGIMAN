@@ -1,19 +1,22 @@
 /* HYBRID mode readability fix.
-   HYBRID is an identification-first presentation: both players' military artwork,
-   shogi kanji, and unit code stay upright and readable from the viewer's perspective.
-   SHOGI mode keeps the traditional opponent-piece rotation separately. */
+   HYBRID keeps the military artwork readable while preserving traditional opponent-piece
+   orientation: CPU pieces rotate 180 degrees exactly like SHOGI pieces. The military art,
+   shogi kanji, and unit code are one composite and rotate together. */
 
 .piece-mode-hybrid .unit-icon {
   opacity: 0.78 !important;
 }
 
-/* In HYBRID, do NOT rotate CPU units. The approved mock shows both sides' military
-   artwork upright; side ownership is communicated by color, not orientation. */
+/* Match SHOGI orientation: the entire CPU HYBRID piece rotates as one unit. */
 .piece-mode-hybrid.unit-cpu {
-  transform: none !important;
+  transform: rotate(180deg) !important;
+  transform-origin: center center !important;
 }
 
-.piece-mode-hybrid.unit-cpu .unit-icon {
+/* unitIcons.css already rotates CPU artwork. Because the HYBRID parent itself now rotates,
+   neutralize the child rotation to avoid a double 180-degree turn. */
+.piece-mode-hybrid.unit-cpu .unit-icon,
+.piece-mode-hybrid.unit-cpu.piece-promoted .unit-icon {
   transform: none !important;
 }
 
@@ -28,9 +31,8 @@
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  transform: translateX(-50%) rotate(0deg) !important;
+  transform: translateX(-50%) !important;
   transform-origin: center center !important;
-  rotate: 0deg !important;
   writing-mode: horizontal-tb !important;
   direction: ltr;
   font-family: 'Yu Gothic', 'Meiryo', 'Noto Sans JP', sans-serif;
@@ -54,7 +56,7 @@
   user-select: none;
 }
 
-.hybrid-kanji-cpu {
+.piece-mode-hybrid.unit-cpu .hybrid-kanji-label {
   color: #eee5ff;
   -webkit-text-stroke-color: #070511;
   background: radial-gradient(
@@ -77,9 +79,8 @@
   z-index: 21;
   min-width: 28px;
   padding: 2px 3px;
-  transform: translateX(-50%) rotate(0deg) !important;
+  transform: translateX(-50%) !important;
   transform-origin: center center !important;
-  rotate: 0deg !important;
   writing-mode: horizontal-tb !important;
   direction: ltr;
   font-family: 'Press Start 2P', 'Courier New', monospace;
@@ -95,7 +96,7 @@
   user-select: none;
 }
 
-.hybrid-code-cpu {
+.piece-mode-hybrid.unit-cpu .hybrid-code-label {
   color: #bbddff;
   border-color: #66aaff;
 }
