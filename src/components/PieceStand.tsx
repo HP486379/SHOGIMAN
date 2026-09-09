@@ -1,5 +1,6 @@
 import { HandPieces, PieceType, Player } from '../types/shogi';
 import { getBattlefieldPieceTypeIcon } from '../assets/battlefieldUnitIcons';
+import { PIECE_KANJI } from '../utils/pieceLabels';
 
 const PIECE_ORDER: PieceType[] = ['rook', 'bishop', 'gold', 'silver', 'knight', 'lance', 'pawn'];
 
@@ -9,6 +10,7 @@ interface PieceStandProps {
   hands: HandPieces;
   selectedHandPiece: PieceType | null;
   currentPlayer: Player;
+  showPieceKanji: boolean;
   onSelectHandPiece: (pieceType: PieceType) => void;
 }
 
@@ -19,7 +21,7 @@ function countPieces(pieces: PieceType[]): Partial<Record<PieceType, number>> {
   }, {});
 }
 
-export function PieceStand({ player, label, hands, selectedHandPiece, currentPlayer, onSelectHandPiece }: PieceStandProps) {
+export function PieceStand({ player, label, hands, selectedHandPiece, currentPlayer, showPieceKanji, onSelectHandPiece }: PieceStandProps) {
   const counts = countPieces(hands[player]);
   const isPlayerStand = player === 'black';
   const canUse = isPlayerStand && currentPlayer === 'black';
@@ -39,9 +41,13 @@ export function PieceStand({ player, label, hands, selectedHandPiece, currentPla
               className={`hand-piece ${isSelected ? 'hand-piece-selected' : ''}`}
               type="button"
               disabled={!canUse}
+              aria-label={`${PIECE_KANJI[pieceType]} ×${count}`}
               onClick={() => onSelectHandPiece(pieceType)}
             >
               <img className="hand-unit-icon" src={getBattlefieldPieceTypeIcon(pieceType)} alt="" draggable={false} />
+              {showPieceKanji && (
+                <span className="hand-kanji-label" aria-hidden="true">{PIECE_KANJI[pieceType]}</span>
+              )}
               <span className="hand-piece-count">×{count}</span>
             </button>
           );

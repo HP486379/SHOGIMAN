@@ -1,5 +1,6 @@
 import { Piece, EffectCell, Position, PieceType } from '../types/shogi';
 import { getBattlefieldUnitIcon } from '../assets/battlefieldUnitIcons';
+import { PIECE_KANJI } from '../utils/pieceLabels';
 
 const UNIT_LABELS: Record<PieceType, string> = {
   pawn: 'INF',
@@ -22,6 +23,7 @@ interface BoardCellProps {
   isCheckedKing: boolean;
   effect: EffectCell | null;
   showCaptureExplosion: boolean;
+  showPieceKanji: boolean;
   onClick: (pos: Position) => void;
 }
 
@@ -31,7 +33,7 @@ function getEffectClass(effect: EffectCell): string {
   return `${base} ${delay}`;
 }
 
-export function BoardCell({ row, col, piece, isSelected, isLastMoveFrom, isLastMoveTo, isCheckedKing, effect, showCaptureExplosion, onClick }: BoardCellProps) {
+export function BoardCell({ row, col, piece, isSelected, isLastMoveFrom, isLastMoveTo, isCheckedKing, effect, showCaptureExplosion, showPieceKanji, onClick }: BoardCellProps) {
   const isLight = (row + col) % 2 === 0;
   const selectedPieceClass = isSelected ? 'piece-selected' : '';
   const checkedKingClass = isCheckedKing ? 'piece-check-target' : '';
@@ -66,6 +68,9 @@ export function BoardCell({ row, col, piece, isSelected, isLastMoveFrom, isLastM
           className={`piece unit-piece ${sideClass} ${selectedPieceClass} ${checkedKingClass} ${promotedPieceClass}`}
         >
           <img className="unit-icon" src={getBattlefieldUnitIcon(piece)} alt="" draggable={false} />
+          {showPieceKanji && (
+            <span className="unit-kanji-label" aria-hidden="true">{PIECE_KANJI[piece.type]}</span>
+          )}
           <span className="unit-type-label">{UNIT_LABELS[piece.type]}</span>
           {piece.promoted && <span className="unit-promoted-badge">UP</span>}
         </div>

@@ -2,10 +2,12 @@ import { CpuLevel } from '../types/shogi';
 
 interface ControlsProps {
   cpuLevel: CpuLevel;
+  showPieceKanji: boolean;
   onCpuLevelChange: (level: CpuLevel) => void;
+  onTogglePieceKanji: () => void;
 }
 
-export function Controls({ cpuLevel, onCpuLevelChange }: ControlsProps) {
+export function Controls({ cpuLevel, showPieceKanji, onCpuLevelChange, onTogglePieceKanji }: ControlsProps) {
   return (
     <div className="controls-bar">
       <div className="controls-inner">
@@ -27,6 +29,17 @@ export function Controls({ cpuLevel, onCpuLevelChange }: ControlsProps) {
             <span className="legend-swatch diagonal-swatch"></span>
             <span>BISHOP BLAST</span>
           </div>
+        </div>
+        <div className="piece-id-box">
+          <span className="piece-id-label">PIECE ID</span>
+          <button
+            type="button"
+            className={`retro-btn piece-id-btn ${showPieceKanji ? 'piece-id-on' : 'piece-id-off'}`}
+            aria-pressed={showPieceKanji}
+            onClick={onTogglePieceKanji}
+          >
+            {showPieceKanji ? 'ON' : 'OFF'}
+          </button>
         </div>
         <div className="cpu-level-box">
           <label className="cpu-level-label" htmlFor="cpu-level-select">CPU LV</label>

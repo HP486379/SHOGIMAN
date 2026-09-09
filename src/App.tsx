@@ -11,9 +11,19 @@ import { UnitGuide } from './components/UnitGuide';
 import { AiAdvisor } from './components/AiAdvisor';
 import { retroAudioEngine } from './utils/audioEngine';
 
+const PIECE_ID_STORAGE_KEY = 'shogiman-piece-id';
+
 function App() {
   const [hasStarted, setHasStarted] = useState(false);
   const [advisorLanguage, setAdvisorLanguage] = useState<AdvisorLanguage>('ja');
+  const [showPieceKanji, setShowPieceKanji] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    try {
+      return window.localStorage.getItem(PIECE_ID_STORAGE_KEY) !== 'off';
+    } catch {
+      return true;
+    }
+  });
   const lastMoveCountRef = useRef(0);
   const previousCheckPlayerRef = useRef<Player | null>(null);
   const previousWinnerRef = useRef<Player | null>(null);
@@ -26,6 +36,15 @@ function App() {
   const firstTurnText = state.firstPlayer === 'black' ? '1P SENTE' : 'CPU SENTE';
   const cpuTurnRole = state.firstPlayer === 'white' ? 'SENTE' : 'GOTE';
   const p1TurnRole = state.firstPlayer === 'black' ? 'SENTE' : 'GOTE';
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(PIECE_ID_STORAGE_KEY, showPieceKanji ? 'on' : 'off');
+    } catch {
+      // Ignore storage failures; the toggle still works for the current session.
+    }
+  }, [showPieceKanji]);
 
   useEffect(() => {
     if (!hasStarted || !state.seEnabled) return;
@@ -82,6 +101,10 @@ function App() {
     }
   };
 
+  const handleTogglePieceKanji = () => {
+    setShowPieceKanji(current => !current);
+  };
+
   return (
     <div className="app-root">
       <div className="scanlines" />
@@ -110,6 +133,7 @@ function App() {
                 hands={state.hands}
                 selectedHandPiece={null}
                 currentPlayer={state.currentPlayer}
+                showPieceKanji={showPieceKanji}
                 onSelectHandPiece={selectHandPiece}
               />
               <div className="player-tag cpu-tag">
@@ -123,6 +147,7 @@ function App() {
                 captureEffect={state.captureEffect}
                 checkPlayer={state.checkPlayer}
                 lastMove={state.lastMove}
+                showPieceKanji={showPieceKanji}
                 onCellClick={handleCellClick}
               />
               <div className="player-tag p1-tag">
@@ -135,13 +160,19 @@ function App() {
                 hands={state.hands}
                 selectedHandPiece={state.selectedHandPiece}
                 currentPlayer={state.currentPlayer}
+                showPieceKanji={showPieceKanji}
                 onSelectHandPiece={selectHandPiece}
               />
             </main>
           </div>
           <aside className="side-panel">
             <UnitGuide activePieceType={activeGuidePieceType} />
-            <Controls cpuLevel={state.cpuLevel} onCpuLevelChange={setCpuLevel} />
+            <Controls
+              cpuLevel={state.cpuLevel}
+              showPieceKanji={showPieceKanji}
+              onCpuLevelChange={setCpuLevel}
+              onTogglePieceKanji={handleTogglePieceKanji}
+            />
           </aside>
           <AiAdvisor
             board={state.board}
