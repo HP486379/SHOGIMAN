@@ -2,6 +2,8 @@ export type Player = 'black' | 'white';
 
 export type CpuLevel = 'easy' | 'normal' | 'hard';
 
+export type DisplayMode = 'hybrid' | 'military' | 'shogi';
+
 export type PieceType =
   | 'king'
   | 'rook'
