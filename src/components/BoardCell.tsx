@@ -66,8 +66,14 @@ export function BoardCell({ row, col, piece, isSelected, isLastMoveFrom, isLastM
       {piece && (
         <div className={`piece unit-piece piece-mode-${displayMode} ${sideClass} ${selectedPieceClass} ${checkedKingClass} ${promotedPieceClass}`}>
           {displayMode !== 'shogi' && <img className="unit-icon" src={getBattlefieldUnitIcon(piece)} alt="" draggable={false} />}
-          {displayMode !== 'military' && <span className="unit-kanji-label" aria-hidden="true">{PIECE_KANJI[piece.type]}</span>}
-          {displayMode !== 'shogi' && <span className="unit-type-label">{UNIT_LABELS[piece.type]}</span>}
+          {displayMode === 'military' && <span className="unit-type-label">{UNIT_LABELS[piece.type]}</span>}
+          {displayMode === 'shogi' && <span className="unit-kanji-label" aria-hidden="true">{PIECE_KANJI[piece.type]}</span>}
+          {displayMode === 'hybrid' && (
+            <>
+              <span className="hybrid-kanji-label" aria-hidden="true">{PIECE_KANJI[piece.type]}</span>
+              <span className="hybrid-code-label" aria-hidden="true">{UNIT_LABELS[piece.type]}</span>
+            </>
+          )}
           {piece.promoted && <span className="unit-promoted-badge">UP</span>}
         </div>
       )}

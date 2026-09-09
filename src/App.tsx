@@ -163,7 +163,7 @@ function App() {
             </main>
           </div>
           <aside className="side-panel">
-            <UnitGuide activePieceType={activeGuidePieceType} />
+            <UnitGuide activePieceType={activeGuidePieceType} displayMode={displayMode} />
             <Controls
               cpuLevel={state.cpuLevel}
               displayMode={displayMode}

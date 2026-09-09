@@ -1,0 +1,130 @@
+/* HYBRID mode readability fix.
+   HYBRID keeps the military artwork readable while preserving traditional opponent-piece
+   orientation: CPU pieces rotate 180 degrees exactly like SHOGI pieces. The military art,
+   shogi kanji, and unit code are one composite and rotate together. */
+
+.piece-mode-hybrid .unit-icon {
+  opacity: 0.78 !important;
+}
+
+/* Match SHOGI orientation: the entire CPU HYBRID piece rotates as one unit. */
+.piece-mode-hybrid.unit-cpu {
+  transform: rotate(180deg) !important;
+  transform-origin: center center !important;
+}
+
+/* unitIcons.css already rotates CPU artwork. Because the HYBRID parent itself now rotates,
+   neutralize the child rotation to avoid a double 180-degree turn. */
+.piece-mode-hybrid.unit-cpu .unit-icon,
+.piece-mode-hybrid.unit-cpu.piece-promoted .unit-icon {
+  transform: none !important;
+}
+
+.hybrid-kanji-label {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  z-index: 20;
+  width: 40px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  transform: translateX(-50%) !important;
+  transform-origin: center center !important;
+  writing-mode: horizontal-tb !important;
+  direction: ltr;
+  font-family: 'Yu Gothic', 'Meiryo', 'Noto Sans JP', sans-serif;
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1;
+  color: #fff6b8;
+  -webkit-text-stroke: 1.15px #050300;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(4, 6, 2, 0.96) 0%,
+    rgba(4, 6, 2, 0.90) 42%,
+    rgba(4, 6, 2, 0.68) 60%,
+    rgba(4, 6, 2, 0.00) 78%
+  );
+  text-shadow:
+    0 1px 1px #000,
+    0 0 3px #000,
+    0 0 7px rgba(255, 224, 72, 0.95);
+  pointer-events: none;
+  user-select: none;
+}
+
+.piece-mode-hybrid.unit-cpu .hybrid-kanji-label {
+  color: #eee5ff;
+  -webkit-text-stroke-color: #070511;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(7, 5, 16, 0.97) 0%,
+    rgba(7, 5, 16, 0.91) 42%,
+    rgba(7, 5, 16, 0.70) 60%,
+    rgba(7, 5, 16, 0.00) 78%
+  );
+  text-shadow:
+    0 1px 1px #000,
+    0 0 3px #000,
+    0 0 8px rgba(166, 125, 255, 0.98);
+}
+
+.hybrid-code-label {
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  z-index: 21;
+  min-width: 28px;
+  padding: 2px 3px;
+  transform: translateX(-50%) !important;
+  transform-origin: center center !important;
+  writing-mode: horizontal-tb !important;
+  direction: ltr;
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  font-size: 6px;
+  line-height: 1;
+  text-align: center;
+  color: #ffeeaa;
+  background: rgba(9, 12, 7, 0.96);
+  border: 1px solid #ffee55;
+  border-radius: 2px;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+  user-select: none;
+}
+
+.piece-mode-hybrid.unit-cpu .hybrid-code-label {
+  color: #bbddff;
+  border-color: #66aaff;
+}
+
+/* Captured pieces already use icon + kanji + count; strengthen only the kanji contrast. */
+.hand-piece-hybrid .hand-kanji-label {
+  font-size: 24px !important;
+  font-weight: 900 !important;
+  color: #fff6b8 !important;
+  text-shadow: 0 0 3px #000, 0 0 7px rgba(255, 224, 72, 0.8) !important;
+}
+
+@media (max-width: 620px) {
+  .hybrid-kanji-label {
+    top: 7px;
+    width: 29px;
+    height: 28px;
+    font-size: 21px;
+    -webkit-text-stroke-width: 0.8px;
+  }
+
+  .hybrid-code-label {
+    min-width: 20px;
+    bottom: -3px;
+    font-size: 4px;
+  }
+
+  .hand-piece-hybrid .hand-kanji-label {
+    font-size: 18px !important;
+  }
+}
