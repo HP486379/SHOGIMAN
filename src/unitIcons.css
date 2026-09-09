@@ -186,6 +186,105 @@
   box-shadow: none;
 }
 
+.display-mode-box {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 8px;
+  background: rgba(8, 16, 8, 0.92);
+  border: 1px solid #516629;
+  border-radius: 2px;
+}
+
+.display-mode-label { font-size: 7px; color: #d8d96c; letter-spacing: 0.7px; }
+.display-mode-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.display-mode-btn { min-height: 30px; padding: 5px 3px; font-size: 6px; color: #a7ad86; background: #0b0e08; border-color: #596443; }
+.display-mode-btn:hover { color: #e8f5bc; border-color: #b8c968; }
+.display-mode-btn.display-mode-active { color: #55ffaf; background: #002614; border-color: #19d977; box-shadow: 0 0 10px rgba(36, 255, 143, .36), inset 0 0 8px rgba(36, 255, 143, .12); }
+
+/* HYBRID: keep the military unit as the hero and overlay one large, readable shogi kanji. */
+.unit-piece.piece-mode-hybrid {
+  width: 58px;
+  height: 58px;
+  padding: 0;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0;
+  clip-path: none;
+  box-shadow: none !important;
+  overflow: visible;
+}
+
+.piece-mode-hybrid .unit-icon {
+  width: 70px;
+  height: 70px;
+  opacity: 1;
+}
+
+.piece-mode-hybrid .unit-kanji-label {
+  top: 13px;
+  z-index: 8;
+  font-size: 21px;
+  font-weight: 900;
+  color: #fff2a8;
+  -webkit-text-stroke: 0.9px rgba(10, 8, 2, 0.98);
+  text-shadow:
+    1px 0 1px #000,
+    -1px 0 1px #000,
+    0 1px 1px #000,
+    0 -1px 1px #000,
+    0 0 6px rgba(255, 221, 72, 0.92);
+}
+
+.piece-mode-hybrid.unit-cpu .unit-kanji-label {
+  color: #e4dcff;
+  -webkit-text-stroke-color: rgba(5, 5, 18, 0.98);
+  text-shadow:
+    1px 0 1px #000,
+    -1px 0 1px #000,
+    0 1px 1px #000,
+    0 -1px 1px #000,
+    0 0 6px rgba(155, 120, 255, 0.95);
+}
+
+/* The reference mock keeps the small military code as a secondary cue. */
+.piece-mode-hybrid .unit-type-label {
+  display: block;
+}
+
+.unit-piece.piece-mode-military { width: 58px; height: 58px; background: transparent !important; border: 0 !important; box-shadow: none !important; overflow: visible; }
+.piece-mode-military .unit-icon { width: 70px; height: 70px; }
+.piece-mode-military .unit-type-label { display: block; }
+
+.unit-piece.piece-mode-shogi {
+  width: 49px;
+  height: 54px;
+  overflow: hidden;
+  background: linear-gradient(155deg, #fff5cf 0%, #e2c66e 58%, #a57627 100%) !important;
+  border: 2px solid #432c08 !important;
+  border-radius: 3px 3px 10px 10px;
+  clip-path: polygon(18% 0, 82% 0, 100% 24%, 90% 100%, 10% 100%, 0 24%);
+  box-shadow: 1px 3px 0 #291704, inset 0 0 0 1px #fff0af !important;
+}
+.piece-mode-shogi .unit-kanji-label { top: 9px; z-index: 8; font-size: 29px; color: #160d02; -webkit-text-stroke: 0; text-shadow: 0 1px 0 #fff4c8; }
+.piece-mode-shogi.unit-cpu { transform: rotate(180deg); }
+.piece-mode-shogi.unit-cpu .unit-kanji-label { color: #160d02; }
+.piece-mode-shogi.piece-promoted .unit-kanji-label { color: #a7190d; }
+.piece-mode-shogi .unit-type-label { display: none; }
+
+.hand-piece-hybrid { min-width: 76px; min-height: 48px; padding: 3px 7px; background: #11180d !important; border-color: #728a38 !important; color: #fff0a4; }
+.hand-piece-hybrid .hand-unit-icon { width: 34px; height: 34px; opacity: .86; }
+.hand-piece-hybrid .hand-kanji-label { position: static; transform: none; font-size: 22px; color: #fff0a4; -webkit-text-stroke: 0; text-shadow: 0 0 5px rgba(255, 220, 70, .45); }
+.hand-piece-hybrid .hand-piece-count { font-size: 7px; color: #fff0a4; }
+.hand-piece-military { min-width: 62px; min-height: 46px; background: #10170b !important; border-color: #516629 !important; }
+.hand-piece-military .hand-unit-icon { width: 39px; height: 39px; }
+.hand-unit-label { font-size: 6px; color: #ffeeaa; }
+.hand-piece-shogi { min-width: 43px; min-height: 46px; background: linear-gradient(155deg, #fff5cf, #c89e48) !important; border-color: #5c3800 !important; }
+.hand-piece-shogi .hand-kanji-label { position: static; transform: none; font-size: 22px; color: #1b1003; -webkit-text-stroke: 0; text-shadow: none; }
+
+.unit-guide-card-active { border-color: #ffea4a !important; box-shadow: 0 0 11px #fff266, inset 0 0 14px rgba(255, 242, 80, .18) !important; }
+
 @media (max-width: 620px) {
   .unit-piece {
     width: 38px;
@@ -224,7 +323,10 @@
     min-height: 32px;
   }
 
-  .piece-id-label {
-    font-size: 6px;
-  }
+  .piece-mode-hybrid { width: 38px !important; height: 38px !important; }
+  .piece-mode-hybrid .unit-kanji-label { top: 8px; font-size: 15px; }
+  .piece-mode-hybrid .unit-icon { width: 48px; height: 48px; }
+  .piece-mode-shogi { width: 34px !important; height: 38px !important; }
+  .piece-mode-shogi .unit-kanji-label { top: 6px; font-size: 21px; }
+  .display-mode-btn { font-size: 5px; }
 }
