@@ -1,28 +1,35 @@
 /* HYBRID mode readability fix.
-   Keep the military unit art visible, but make the shogi kanji unmistakable at a glance.
-   This file is intentionally imported last so it can override earlier visual-polish CSS. */
+   The HYBRID kanji is rendered directly in the board cell, outside the military-unit
+   container, so opponent-unit rotation can never rotate the kanji. */
 
 .piece-mode-hybrid .unit-icon {
   opacity: 0.78 !important;
 }
 
-.piece-mode-hybrid .unit-kanji-label {
-  top: 12px !important;
-  left: 50% !important;
-  z-index: 20 !important;
+/* Keep HYBRID military artwork facing its owner. */
+.piece-mode-hybrid.unit-cpu .unit-icon {
+  transform: rotate(180deg) !important;
+}
+
+/* HYBRID kanji is a board-cell overlay, independent of unit transforms. */
+.hybrid-kanji-label {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  z-index: 20;
   width: 40px;
   height: 38px;
-  display: flex !important;
+  display: flex;
   align-items: center;
   justify-content: center;
-  transform: translateX(-50%) !important;
+  transform: translateX(-50%);
   box-sizing: border-box;
-  font-family: 'Yu Gothic', 'Meiryo', 'Noto Sans JP', sans-serif !important;
-  font-size: 30px !important;
-  font-weight: 900 !important;
-  line-height: 1 !important;
-  color: #fff6b8 !important;
-  -webkit-text-stroke: 1.15px #050300 !important;
+  font-family: 'Yu Gothic', 'Meiryo', 'Noto Sans JP', sans-serif;
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1;
+  color: #fff6b8;
+  -webkit-text-stroke: 1.15px #050300;
   background: radial-gradient(
     ellipse at center,
     rgba(4, 6, 2, 0.96) 0%,
@@ -33,25 +40,16 @@
   text-shadow:
     0 1px 1px #000,
     0 0 3px #000,
-    0 0 7px rgba(255, 224, 72, 0.95) !important;
+    0 0 7px rgba(255, 224, 72, 0.95);
   pointer-events: none;
   user-select: none;
 }
 
-/* In HYBRID, only the opponent's military artwork faces the opponent.
-   The kanji and the small military code must always remain upright for the player. */
-.piece-mode-hybrid.unit-cpu {
-  transform: none !important;
-}
-
-.piece-mode-hybrid.unit-cpu .unit-icon {
-  transform: rotate(180deg) !important;
-}
-
-.piece-mode-hybrid.unit-cpu .unit-kanji-label {
+.hybrid-kanji-cpu {
+  /* Explicitly keep CPU kanji upright for the player. */
   transform: translateX(-50%) rotate(0deg) !important;
-  color: #eee5ff !important;
-  -webkit-text-stroke-color: #070511 !important;
+  color: #eee5ff;
+  -webkit-text-stroke-color: #070511;
   background: radial-gradient(
     ellipse at center,
     rgba(7, 5, 16, 0.97) 0%,
@@ -62,16 +60,16 @@
   text-shadow:
     0 1px 1px #000,
     0 0 3px #000,
-    0 0 8px rgba(166, 125, 255, 0.98) !important;
+    0 0 8px rgba(166, 125, 255, 0.98);
+}
+
+.hybrid-kanji-player {
+  transform: translateX(-50%) rotate(0deg) !important;
 }
 
 /* The military code remains a small secondary cue below the main kanji. */
 .piece-mode-hybrid .unit-type-label {
   z-index: 21 !important;
-}
-
-.piece-mode-hybrid.unit-cpu .unit-type-label {
-  transform: translateX(-50%) rotate(0deg) !important;
 }
 
 /* Captured pieces already use icon + kanji + count; strengthen only the kanji contrast. */
@@ -83,12 +81,12 @@
 }
 
 @media (max-width: 620px) {
-  .piece-mode-hybrid .unit-kanji-label {
-    top: 7px !important;
+  .hybrid-kanji-label {
+    top: 7px;
     width: 29px;
     height: 28px;
-    font-size: 21px !important;
-    -webkit-text-stroke-width: 0.8px !important;
+    font-size: 21px;
+    -webkit-text-stroke-width: 0.8px;
   }
 
   .hand-piece-hybrid .hand-kanji-label {
