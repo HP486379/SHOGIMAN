@@ -1,19 +1,20 @@
 /* HYBRID mode readability fix.
-   In HYBRID, the military artwork may face its owner, but the shogi kanji and unit code
-   are rendered directly in the board cell and always face the player. */
+   HYBRID is an identification-first presentation: both players' military artwork,
+   shogi kanji, and unit code stay upright and readable from the viewer's perspective.
+   SHOGI mode keeps the traditional opponent-piece rotation separately. */
 
 .piece-mode-hybrid .unit-icon {
   opacity: 0.78 !important;
 }
 
-/* Only the opponent's military artwork rotates. The HYBRID labels are not children of
-   this element, so they cannot inherit the artwork orientation. */
+/* In HYBRID, do NOT rotate CPU units. The approved mock shows both sides' military
+   artwork upright; side ownership is communicated by color, not orientation. */
 .piece-mode-hybrid.unit-cpu {
   transform: none !important;
 }
 
 .piece-mode-hybrid.unit-cpu .unit-icon {
-  transform: rotate(180deg) !important;
+  transform: none !important;
 }
 
 .hybrid-kanji-label {
