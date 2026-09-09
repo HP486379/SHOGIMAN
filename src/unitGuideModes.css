@@ -1,0 +1,48 @@
+/* Display-mode-specific UNIT GUIDE layouts. */
+
+.unit-guide-mode-military .unit-guide-card {
+  grid-template-columns: 96px minmax(0, 1fr);
+}
+
+.unit-guide-mode-military .unit-guide-image-box {
+  border-right: 1px solid #363000;
+}
+
+.unit-guide-mode-military .unit-guide-copy {
+  padding-left: 12px;
+}
+
+.unit-guide-mode-military .unit-guide-main {
+  font-size: 15px;
+}
+
+.unit-guide-mode-shogi .unit-guide-card {
+  grid-template-columns: 72px minmax(0, 1fr);
+}
+
+.unit-guide-mode-shogi .unit-guide-kanji {
+  font-size: 36px;
+}
+
+.unit-guide-mode-shogi .unit-guide-ja {
+  font-size: 18px;
+}
+
+.unit-guide-mode-shogi .unit-guide-en {
+  color: #c99bff;
+  font-size: 10px;
+}
+
+@media (max-width: 620px) {
+  .unit-guide-mode-military .unit-guide-card {
+    grid-template-columns: 82px minmax(0, 1fr);
+  }
+
+  .unit-guide-mode-shogi .unit-guide-card {
+    grid-template-columns: 58px minmax(0, 1fr);
+  }
+
+  .unit-guide-mode-shogi .unit-guide-kanji {
+    font-size: 28px;
+  }
+}
