@@ -1,4 +1,4 @@
-import { BoardGrid, Position, EffectCell, Player, LastMove } from '../types/shogi';
+import { BoardGrid, Position, EffectCell, Player, LastMove, DisplayMode } from '../types/shogi';
 import { BoardCell } from './BoardCell';
 
 interface BoardProps {
@@ -8,7 +8,7 @@ interface BoardProps {
   captureEffect: Position | null;
   checkPlayer: Player | null;
   lastMove: LastMove | null;
-  showPieceKanji: boolean;
+  displayMode: DisplayMode;
   onCellClick: (pos: Position) => void;
 }
 
@@ -23,7 +23,7 @@ function isSamePos(a: Position | null | undefined, row: number, col: number): bo
   return !!a && a.row === row && a.col === col;
 }
 
-export function Board({ board, selectedPos, effects, captureEffect, checkPlayer, lastMove, showPieceKanji, onCellClick }: BoardProps) {
+export function Board({ board, selectedPos, effects, captureEffect, checkPlayer, lastMove, displayMode, onCellClick }: BoardProps) {
   return (
     <div className="board-wrapper">
       {checkPlayer && (
@@ -47,17 +47,13 @@ export function Board({ board, selectedPos, effects, captureEffect, checkPlayer,
                   row={rIdx}
                   col={cIdx}
                   piece={piece}
-                  isSelected={
-                    selectedPos?.row === rIdx && selectedPos?.col === cIdx
-                  }
+                  isSelected={selectedPos?.row === rIdx && selectedPos?.col === cIdx}
                   isLastMoveFrom={isSamePos(lastMove?.from, rIdx, cIdx)}
                   isLastMoveTo={isSamePos(lastMove?.to, rIdx, cIdx)}
                   isCheckedKing={piece?.type === 'king' && piece.player === checkPlayer}
                   effect={getEffect(effects, rIdx, cIdx)}
-                  showCaptureExplosion={
-                    captureEffect?.row === rIdx && captureEffect?.col === cIdx
-                  }
-                  showPieceKanji={showPieceKanji}
+                  showCaptureExplosion={captureEffect?.row === rIdx && captureEffect?.col === cIdx}
+                  displayMode={displayMode}
                   onClick={onCellClick}
                 />
               ))}

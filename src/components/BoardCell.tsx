@@ -1,4 +1,4 @@
-import { Piece, EffectCell, Position, PieceType } from '../types/shogi';
+import { DisplayMode, Piece, EffectCell, Position, PieceType } from '../types/shogi';
 import { getBattlefieldUnitIcon } from '../assets/battlefieldUnitIcons';
 import { PIECE_KANJI } from '../utils/pieceLabels';
 
@@ -23,7 +23,7 @@ interface BoardCellProps {
   isCheckedKing: boolean;
   effect: EffectCell | null;
   showCaptureExplosion: boolean;
-  showPieceKanji: boolean;
+  displayMode: DisplayMode;
   onClick: (pos: Position) => void;
 }
 
@@ -33,7 +33,7 @@ function getEffectClass(effect: EffectCell): string {
   return `${base} ${delay}`;
 }
 
-export function BoardCell({ row, col, piece, isSelected, isLastMoveFrom, isLastMoveTo, isCheckedKing, effect, showCaptureExplosion, showPieceKanji, onClick }: BoardCellProps) {
+export function BoardCell({ row, col, piece, isSelected, isLastMoveFrom, isLastMoveTo, isCheckedKing, effect, showCaptureExplosion, displayMode, onClick }: BoardCellProps) {
   const isLight = (row + col) % 2 === 0;
   const selectedPieceClass = isSelected ? 'piece-selected' : '';
   const checkedKingClass = isCheckedKing ? 'piece-check-target' : '';
@@ -64,20 +64,14 @@ export function BoardCell({ row, col, piece, isSelected, isLastMoveFrom, isLastM
         </div>
       )}
       {piece && (
-        <div
-          className={`piece unit-piece ${sideClass} ${selectedPieceClass} ${checkedKingClass} ${promotedPieceClass}`}
-        >
-          <img className="unit-icon" src={getBattlefieldUnitIcon(piece)} alt="" draggable={false} />
-          {showPieceKanji && (
-            <span className="unit-kanji-label" aria-hidden="true">{PIECE_KANJI[piece.type]}</span>
-          )}
-          <span className="unit-type-label">{UNIT_LABELS[piece.type]}</span>
+        <div className={`piece unit-piece piece-mode-${displayMode} ${sideClass} ${selectedPieceClass} ${checkedKingClass} ${promotedPieceClass}`}>
+          {displayMode !== 'shogi' && <img className="unit-icon" src={getBattlefieldUnitIcon(piece)} alt="" draggable={false} />}
+          {displayMode !== 'military' && <span className="unit-kanji-label" aria-hidden="true">{PIECE_KANJI[piece.type]}</span>}
+          {displayMode !== 'shogi' && <span className="unit-type-label">{UNIT_LABELS[piece.type]}</span>}
           {piece.promoted && <span className="unit-promoted-badge">UP</span>}
         </div>
       )}
-      {!piece && !effect && (
-        <div className="cell-empty" />
-      )}
+      {!piece && !effect && <div className="cell-empty" />}
     </div>
   );
 }

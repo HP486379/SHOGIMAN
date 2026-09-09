@@ -1,13 +1,13 @@
-import { CpuLevel } from '../types/shogi';
+import { CpuLevel, DisplayMode } from '../types/shogi';
 
 interface ControlsProps {
   cpuLevel: CpuLevel;
-  showPieceKanji: boolean;
+  displayMode: DisplayMode;
   onCpuLevelChange: (level: CpuLevel) => void;
-  onTogglePieceKanji: () => void;
+  onDisplayModeChange: (mode: DisplayMode) => void;
 }
 
-export function Controls({ cpuLevel, showPieceKanji, onCpuLevelChange, onTogglePieceKanji }: ControlsProps) {
+export function Controls({ cpuLevel, displayMode, onCpuLevelChange, onDisplayModeChange }: ControlsProps) {
   return (
     <div className="controls-bar">
       <div className="controls-inner">
@@ -30,16 +30,21 @@ export function Controls({ cpuLevel, showPieceKanji, onCpuLevelChange, onToggleP
             <span>BISHOP BLAST</span>
           </div>
         </div>
-        <div className="piece-id-box">
-          <span className="piece-id-label">PIECE ID</span>
-          <button
-            type="button"
-            className={`retro-btn piece-id-btn ${showPieceKanji ? 'piece-id-on' : 'piece-id-off'}`}
-            aria-pressed={showPieceKanji}
-            onClick={onTogglePieceKanji}
-          >
-            {showPieceKanji ? 'ON' : 'OFF'}
-          </button>
+        <div className="display-mode-box">
+          <span className="display-mode-label">DISPLAY MODE</span>
+          <div className="display-mode-buttons" role="group" aria-label="Display mode">
+            {(['hybrid', 'military', 'shogi'] as DisplayMode[]).map(mode => (
+              <button
+                key={mode}
+                type="button"
+                className={`retro-btn display-mode-btn ${displayMode === mode ? 'display-mode-active' : ''}`}
+                aria-pressed={displayMode === mode}
+                onClick={() => onDisplayModeChange(mode)}
+              >
+                {mode.toUpperCase()}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="cpu-level-box">
           <label className="cpu-level-label" htmlFor="cpu-level-select">CPU LV</label>

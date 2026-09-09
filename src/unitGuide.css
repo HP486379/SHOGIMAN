@@ -154,7 +154,7 @@
 .unit-guide-card {
   min-height: 96px;
   display: grid;
-  grid-template-columns: 88px 1fr;
+  grid-template-columns: 42px 72px minmax(0, 1fr);
   overflow: hidden;
   border: 2px solid #585000;
   border-radius: 4px;
@@ -185,10 +185,23 @@
 }
 
 .unit-guide-image {
-  width: 100px;
-  height: 100px;
+  width: 78px;
+  height: 78px;
   object-fit: contain;
   filter: drop-shadow(2px 4px 2px rgba(0, 0, 0, 0.88)) saturate(1.14) brightness(1.08);
+}
+
+.unit-guide-kanji {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Noto Serif JP', 'Yu Mincho', 'Hiragino Mincho Pro', serif;
+  font-size: 30px;
+  font-weight: 900;
+  color: #ffdf55;
+  background: #0b0c04;
+  border-right: 1px solid #363000;
+  text-shadow: 0 0 8px rgba(255, 196, 0, 0.75);
 }
 
 .unit-guide-copy {
@@ -248,13 +261,15 @@
   }
 
   .unit-guide-card {
-    grid-template-columns: 82px 1fr;
+    grid-template-columns: 38px 62px minmax(0, 1fr);
   }
 
   .unit-guide-image {
-    width: 88px;
-    height: 88px;
+    width: 68px;
+    height: 68px;
   }
+
+  .unit-guide-kanji { font-size: 24px; }
 
   .unit-guide-title {
     font-size: 11px;
