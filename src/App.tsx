@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { PieceType, Player } from './types/shogi';
+import { DisplayMode, PieceType, Player } from './types/shogi';
 import { AdvisorLanguage } from './utils/aiAdvisor';
 import { useShogi } from './hooks/useShogi';
 import { Header } from './components/Header';
@@ -11,17 +11,18 @@ import { UnitGuide } from './components/UnitGuide';
 import { AiAdvisor } from './components/AiAdvisor';
 import { retroAudioEngine } from './utils/audioEngine';
 
-const PIECE_ID_STORAGE_KEY = 'shogiman-piece-id';
+const DISPLAY_MODE_STORAGE_KEY = 'shogiman-display-mode';
 
 function App() {
   const [hasStarted, setHasStarted] = useState(false);
   const [advisorLanguage, setAdvisorLanguage] = useState<AdvisorLanguage>('ja');
-  const [showPieceKanji, setShowPieceKanji] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return true;
+  const [displayMode, setDisplayMode] = useState<DisplayMode>(() => {
+    if (typeof window === 'undefined') return 'hybrid';
     try {
-      return window.localStorage.getItem(PIECE_ID_STORAGE_KEY) !== 'off';
+      const saved = window.localStorage.getItem(DISPLAY_MODE_STORAGE_KEY);
+      return saved === 'military' || saved === 'shogi' || saved === 'hybrid' ? saved : 'hybrid';
     } catch {
-      return true;
+      return 'hybrid';
     }
   });
   const lastMoveCountRef = useRef(0);
@@ -40,11 +41,11 @@ function App() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      window.localStorage.setItem(PIECE_ID_STORAGE_KEY, showPieceKanji ? 'on' : 'off');
+      window.localStorage.setItem(DISPLAY_MODE_STORAGE_KEY, displayMode);
     } catch {
-      // Ignore storage failures; the toggle still works for the current session.
+      // Ignore storage failures; the selector still works for the current session.
     }
-  }, [showPieceKanji]);
+  }, [displayMode]);
 
   useEffect(() => {
     if (!hasStarted || !state.seEnabled) return;
@@ -101,10 +102,6 @@ function App() {
     }
   };
 
-  const handleTogglePieceKanji = () => {
-    setShowPieceKanji(current => !current);
-  };
-
   return (
     <div className="app-root">
       <div className="scanlines" />
@@ -133,7 +130,7 @@ function App() {
                 hands={state.hands}
                 selectedHandPiece={null}
                 currentPlayer={state.currentPlayer}
-                showPieceKanji={showPieceKanji}
+                displayMode={displayMode}
                 onSelectHandPiece={selectHandPiece}
               />
               <div className="player-tag cpu-tag">
@@ -147,7 +144,7 @@ function App() {
                 captureEffect={state.captureEffect}
                 checkPlayer={state.checkPlayer}
                 lastMove={state.lastMove}
-                showPieceKanji={showPieceKanji}
+                displayMode={displayMode}
                 onCellClick={handleCellClick}
               />
               <div className="player-tag p1-tag">
@@ -160,7 +157,7 @@ function App() {
                 hands={state.hands}
                 selectedHandPiece={state.selectedHandPiece}
                 currentPlayer={state.currentPlayer}
-                showPieceKanji={showPieceKanji}
+                displayMode={displayMode}
                 onSelectHandPiece={selectHandPiece}
               />
             </main>
@@ -169,9 +166,9 @@ function App() {
             <UnitGuide activePieceType={activeGuidePieceType} />
             <Controls
               cpuLevel={state.cpuLevel}
-              showPieceKanji={showPieceKanji}
+              displayMode={displayMode}
               onCpuLevelChange={setCpuLevel}
-              onTogglePieceKanji={handleTogglePieceKanji}
+              onDisplayModeChange={setDisplayMode}
             />
           </aside>
           <AiAdvisor
