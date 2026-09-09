@@ -8,6 +8,7 @@ interface BoardProps {
   captureEffect: Position | null;
   checkPlayer: Player | null;
   lastMove: LastMove | null;
+  showPieceKanji: boolean;
   onCellClick: (pos: Position) => void;
 }
 
@@ -22,7 +23,7 @@ function isSamePos(a: Position | null | undefined, row: number, col: number): bo
   return !!a && a.row === row && a.col === col;
 }
 
-export function Board({ board, selectedPos, effects, captureEffect, checkPlayer, lastMove, onCellClick }: BoardProps) {
+export function Board({ board, selectedPos, effects, captureEffect, checkPlayer, lastMove, showPieceKanji, onCellClick }: BoardProps) {
   return (
     <div className="board-wrapper">
       {checkPlayer && (
@@ -56,6 +57,7 @@ export function Board({ board, selectedPos, effects, captureEffect, checkPlayer,
                   showCaptureExplosion={
                     captureEffect?.row === rIdx && captureEffect?.col === cIdx
                   }
+                  showPieceKanji={showPieceKanji}
                   onClick={onCellClick}
                 />
               ))}
