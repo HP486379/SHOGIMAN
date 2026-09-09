@@ -1,8 +1,11 @@
-import { HandPieces, PieceType, Player } from '../types/shogi';
+import { DisplayMode, HandPieces, PieceType, Player } from '../types/shogi';
 import { getBattlefieldPieceTypeIcon } from '../assets/battlefieldUnitIcons';
 import { PIECE_KANJI } from '../utils/pieceLabels';
 
 const PIECE_ORDER: PieceType[] = ['rook', 'bishop', 'gold', 'silver', 'knight', 'lance', 'pawn'];
+const UNIT_LABELS: Partial<Record<PieceType, string>> = {
+  pawn: 'INF', lance: 'ART', knight: 'DRN', silver: 'SPC', gold: 'GRD', bishop: 'RKT', rook: 'TNK',
+};
 
 interface PieceStandProps {
   player: Player;
@@ -10,7 +13,7 @@ interface PieceStandProps {
   hands: HandPieces;
   selectedHandPiece: PieceType | null;
   currentPlayer: Player;
-  showPieceKanji: boolean;
+  displayMode: DisplayMode;
   onSelectHandPiece: (pieceType: PieceType) => void;
 }
 
@@ -21,7 +24,7 @@ function countPieces(pieces: PieceType[]): Partial<Record<PieceType, number>> {
   }, {});
 }
 
-export function PieceStand({ player, label, hands, selectedHandPiece, currentPlayer, showPieceKanji, onSelectHandPiece }: PieceStandProps) {
+export function PieceStand({ player, label, hands, selectedHandPiece, currentPlayer, displayMode, onSelectHandPiece }: PieceStandProps) {
   const counts = countPieces(hands[player]);
   const isPlayerStand = player === 'black';
   const canUse = isPlayerStand && currentPlayer === 'black';
@@ -38,16 +41,15 @@ export function PieceStand({ player, label, hands, selectedHandPiece, currentPla
           return (
             <button
               key={pieceType}
-              className={`hand-piece ${isSelected ? 'hand-piece-selected' : ''}`}
+              className={`hand-piece hand-piece-${displayMode} ${isSelected ? 'hand-piece-selected' : ''}`}
               type="button"
               disabled={!canUse}
               aria-label={`${PIECE_KANJI[pieceType]} ×${count}`}
               onClick={() => onSelectHandPiece(pieceType)}
             >
-              <img className="hand-unit-icon" src={getBattlefieldPieceTypeIcon(pieceType)} alt="" draggable={false} />
-              {showPieceKanji && (
-                <span className="hand-kanji-label" aria-hidden="true">{PIECE_KANJI[pieceType]}</span>
-              )}
+              {displayMode !== 'shogi' && <img className="hand-unit-icon" src={getBattlefieldPieceTypeIcon(pieceType)} alt="" draggable={false} />}
+              {displayMode !== 'military' && <span className="hand-kanji-label" aria-hidden="true">{PIECE_KANJI[pieceType]}</span>}
+              {displayMode === 'military' && <span className="hand-unit-label" aria-hidden="true">{UNIT_LABELS[pieceType]}</span>}
               <span className="hand-piece-count">×{count}</span>
             </button>
           );
