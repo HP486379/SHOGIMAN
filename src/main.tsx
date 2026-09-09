@@ -9,6 +9,7 @@ import './unitGuide.css';
 import './checkEffects.css';
 import './uxFixes.css';
 import './aiAdvisor.css';
+import './hybridReadability.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
