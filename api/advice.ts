@@ -3,6 +3,7 @@ declare const process: { env: Record<string, string | undefined> };
 type Player = 'black' | 'white';
 type PieceType = 'king' | 'rook' | 'bishop' | 'gold' | 'silver' | 'knight' | 'lance' | 'pawn';
 type AdvisorLanguage = 'ja' | 'en';
+type AdvisorTrigger = 'manual' | 'capture' | 'promotion' | 'hq_attack' | 'evaluation_swing' | 'periodic' | 'multiple';
 
 interface PieceInput {
   type: PieceType;
@@ -17,6 +18,7 @@ interface AdvisorRequestBody {
   checkPlayer: Player | null;
   lastMovePlayer: Player | null;
   language: AdvisorLanguage;
+  trigger: AdvisorTrigger;
 }
 
 interface VercelRequest {
@@ -41,57 +43,33 @@ const PIECE_TYPES = new Set<PieceType>([
   'king', 'rook', 'bishop', 'gold', 'silver', 'knight', 'lance', 'pawn',
 ]);
 const PLAYERS = new Set<Player>(['black', 'white']);
+const TRIGGERS = new Set<AdvisorTrigger>(['manual', 'capture', 'promotion', 'hq_attack', 'evaluation_swing', 'periodic', 'multiple']);
 const RATE_WINDOW_MS = 60_000;
-const RATE_LIMIT = 30;
+const RATE_LIMIT = 20;
 const MIN_INTERVAL_MS = 700;
 const rateBuckets = new Map<string, { windowStart: number; count: number; lastAt: number }>();
 
-const UNIT_NAMES_JA: Record<PieceType, string> = {
-  king: '司令部',
-  rook: '戦車',
-  bishop: 'ロケット砲',
-  gold: '近衛兵',
-  silver: '特殊部隊',
-  knight: 'ドローン',
-  lance: '自走砲',
-  pawn: '歩兵',
+const UNIT_CODES: Record<PieceType, string> = {
+  king: 'H',
+  rook: 'T',
+  bishop: 'R',
+  gold: 'G',
+  silver: 'S',
+  knight: 'D',
+  lance: 'A',
+  pawn: 'I',
 };
 
-const UNIT_NAMES_EN: Record<PieceType, string> = {
-  king: 'HQ',
-  rook: 'Tank',
-  bishop: 'Rocket Launcher',
-  gold: 'Guard',
-  silver: 'Special Forces',
-  knight: 'Drone',
-  lance: 'Artillery',
-  pawn: 'Infantry',
-};
+const SYSTEM_PROMPT = `You are the tactical field advisor in SHOGI FRONTLINE.
+Rules are shogi-based, but visible wording must stay inside the military setting.
+1P is the human side; CPU is the opponent. Board row 0 is CPU home side, row 8 is 1P home side.
+Compact board cells use: p=1P, c=CPU, H=HQ, T=Tank, R=Rocket Launcher, G=Guard, S=Special Forces, D=Drone, A=Artillery, I=Infantry, +=upgraded, .=empty.
 
-const SYSTEM_PROMPT = `# Role
-You are the tactical field advisor in SHOGI FRONTLINE. The rules are based on shogi, but your visible language must stay inside SHOGI FRONTLINE's military setting.
-Black = human 1P and starts from the bottom side. White = CPU and starts from the top side.
-The board is a 9x9 nested array. Array row 0 is the CPU home side and row 8 is the 1P home side.
+Return at most two short sentences total: one summary sentence and optionally one detail sentence. Do not list obvious board inventories or repeat what the UI already shows. Focus only on the most useful tactical implication of the current position.
+Never invent a legal move, capture, upgrade, direct HQ attack, or exact unit count. Broad positional advice is preferred.
 
-# Response rules
-- Analyze only the supplied position and advise from 1P's perspective.
-- Ground every observation in the supplied board, reserve units, turn, and HQ attack status.
-- Do not invent a promotion/upgrade, capture, direct HQ attack, unit count, or exact legal move.
-- Do not claim a unit is upgraded unless its upgraded field is true.
-- Prefer broad tactical language such as left flank, center, right flank, frontline, home area, enemy area, attack route, retreat route, and reserve units.
-- Never use numbered shogi coordinates such as 7筋 or 1段目. Do not use 筋/段 notation at all.
-- The summary is one short sentence. Return 2 to 4 short bullet points. No markdown.
-
-# Japanese vocabulary rules
-When language=ja, use ONLY these unit names when referring to units:
-司令部 / 戦車 / ロケット砲 / 近衛兵 / 特殊部隊 / ドローン / 自走砲 / 歩兵.
-For an upgraded unit, say 強化戦車, 強化ロケット砲, 強化特殊部隊, 強化ドローン, 強化自走砲, or 強化歩兵 as appropriate.
-Do NOT use conventional shogi vocabulary in the visible answer. Forbidden examples include 王, 玉, 飛車, 角, 金, 銀, 桂, 香, 歩 by itself, と金, 馬, 龍, 竜, 成り, 王手, 玉頭, 駒, 持ち駒, and numbered 筋/段 notation.
-Say 司令部への直接攻撃 instead of 王手, and 予備戦力 instead of 持ち駒.
-Write natural Japanese with a military operations tone, not textbook shogi commentary.
-
-# English vocabulary rules
-When language=en, use only HQ, Tank, Rocket Launcher, Guard, Special Forces, Drone, Artillery, and Infantry for unit names. Prefer military positional language over traditional shogi jargon.`;
+For Japanese, use only these unit names: 司令部, 戦車, ロケット砲, 近衛兵, 特殊部隊, ドローン, 自走砲, 歩兵. For upgraded units use 強化〜. Never use ordinary shogi terms such as 王, 玉, 飛車, 角, 金, 銀, 桂, 香, 歩 by itself, と金, 馬, 龍, 竜, 成り, 王手, 玉頭, 駒, 持ち駒, 筋, 段. Say 司令部への直接攻撃 instead of 王手, and 予備戦力 instead of 持ち駒.
+For English, use only HQ, Tank, Rocket Launcher, Guard, Special Forces, Drone, Artillery, and Infantry for unit names.`;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -103,6 +81,10 @@ function isPlayer(value: unknown): value is Player {
 
 function isPieceType(value: unknown): value is PieceType {
   return typeof value === 'string' && PIECE_TYPES.has(value as PieceType);
+}
+
+function isTrigger(value: unknown): value is AdvisorTrigger {
+  return typeof value === 'string' && TRIGGERS.has(value as AdvisorTrigger);
 }
 
 function isPiece(value: unknown): value is PieceInput | null {
@@ -122,7 +104,8 @@ function isAdvisorRequestBody(value: unknown): value is AdvisorRequestBody {
   if (!isPlayer(value.currentPlayer)) return false;
   if (value.checkPlayer !== null && !isPlayer(value.checkPlayer)) return false;
   if (value.lastMovePlayer !== null && !isPlayer(value.lastMovePlayer)) return false;
-  return value.language === 'ja' || value.language === 'en';
+  if (value.language !== 'ja' && value.language !== 'en') return false;
+  return isTrigger(value.trigger);
 }
 
 function headerValue(req: VercelRequest, name: string): string | null {
@@ -160,31 +143,28 @@ function parseBody(body: unknown): unknown {
   }
 }
 
-function buildModelInput(body: AdvisorRequestBody): unknown {
-  const names = body.language === 'ja' ? UNIT_NAMES_JA : UNIT_NAMES_EN;
-  const sideName = (player: Player) => player === 'black' ? '1P' : 'CPU';
-  const attackStatus = body.checkPlayer === null
-    ? 'none'
-    : body.checkPlayer === 'black'
-      ? '1P_HQ_under_direct_attack'
-      : 'CPU_HQ_under_direct_attack';
+function encodePiece(piece: PieceInput | null): string {
+  if (!piece) return '.';
+  const side = piece.player === 'black' ? 'p' : 'c';
+  return `${side}${UNIT_CODES[piece.type]}${piece.promoted ? '+' : ''}`;
+}
 
-  return {
-    language: body.language,
-    perspective: '1P',
-    currentTurn: sideName(body.currentPlayer),
-    hqAttackStatus: attackStatus,
-    lastActionBy: body.lastMovePlayer ? sideName(body.lastMovePlayer) : 'none',
-    board: body.board.map(row => row.map(piece => piece ? {
-      side: sideName(piece.player),
-      unit: names[piece.type],
-      upgraded: Boolean(piece.promoted),
-    } : null)),
-    reserveUnits: {
-      '1P': body.hands.black.map(piece => names[piece]),
-      'CPU': body.hands.white.map(piece => names[piece]),
-    },
-  };
+function encodeReserve(pieces: PieceType[]): string {
+  if (pieces.length === 0) return '-';
+  const counts = pieces.reduce<Record<string, number>>((acc, piece) => {
+    const code = UNIT_CODES[piece];
+    acc[code] = (acc[code] ?? 0) + 1;
+    return acc;
+  }, {});
+  return Object.entries(counts).map(([code, count]) => `${code}${count}`).join('');
+}
+
+function buildModelInput(body: AdvisorRequestBody): string {
+  const turn = body.currentPlayer === 'black' ? '1P' : 'CPU';
+  const check = body.checkPlayer === null ? '-' : body.checkPlayer === 'black' ? '1P' : 'CPU';
+  const last = body.lastMovePlayer === null ? '-' : body.lastMovePlayer === 'black' ? '1P' : 'CPU';
+  const board = body.board.map(row => row.map(encodePiece).join(',')).join('/');
+  return `lang=${body.language};trigger=${body.trigger};turn=${turn};hq_under_attack=${check};last=${last};reserve1P=${encodeReserve(body.hands.black)};reserveCPU=${encodeReserve(body.hands.white)};board=${board}`;
 }
 
 function extractOutputText(payload: unknown): string | null {
@@ -205,39 +185,39 @@ function extractOutputText(payload: unknown): string | null {
 
 function sanitizeAdvice(value: unknown): AdvisorResult | null {
   if (!isRecord(value) || typeof value.summary !== 'string' || !Array.isArray(value.bullets)) return null;
-  const summary = value.summary.trim().slice(0, 260);
+  const summary = value.summary.trim().slice(0, 120);
   const bullets = value.bullets
     .filter((item): item is string => typeof item === 'string')
-    .map(item => item.trim().slice(0, 260))
+    .map(item => item.trim().slice(0, 140))
     .filter(Boolean)
-    .slice(0, 4);
-  if (!summary || bullets.length === 0) return null;
+    .slice(0, 1);
+  if (!summary) return null;
   return { summary, bullets };
 }
 
 function containsForbiddenJapaneseVocabulary(advice: AdvisorResult): boolean {
   const text = [advice.summary, ...advice.bullets].join('\n');
-  return /[王玉飛角金銀桂香馬竜龍駒]|歩(?!兵)|成り|[1-9一二三四五六七八九]筋|[1-9一二三四五六七八九]段(?:目)?/.test(text);
+  return /[王玉飛角金銀桂香馬竜龍駒]|歩(?!兵)|成り|[筋段]/.test(text);
 }
 
 async function requestAdvice(
   apiKey: string,
-  input: unknown,
+  input: string,
   instructions: string,
   signal: AbortSignal,
 ): Promise<AdvisorResult | null> {
   const openAiResponse = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${apiKey}`,
+      Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       model: 'gpt-5.4-mini',
       store: false,
       instructions,
-      input: JSON.stringify(input),
-      max_output_tokens: 320,
+      input,
+      max_output_tokens: 160,
       text: {
         format: {
           type: 'json_schema',
@@ -247,12 +227,12 @@ async function requestAdvice(
             type: 'object',
             additionalProperties: false,
             properties: {
-              summary: { type: 'string', minLength: 1, maxLength: 220 },
+              summary: { type: 'string', minLength: 1, maxLength: 100 },
               bullets: {
                 type: 'array',
-                minItems: 2,
-                maxItems: 4,
-                items: { type: 'string', minLength: 1, maxLength: 220 },
+                minItems: 0,
+                maxItems: 1,
+                items: { type: 'string', minLength: 1, maxLength: 120 },
               },
             },
             required: ['summary', 'bullets'],
@@ -322,20 +302,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 18_000);
+  const timeout = setTimeout(() => controller.abort(), 15_000);
 
   try {
     const modelInput = buildModelInput(body);
     let advice = await requestAdvice(apiKey, modelInput, SYSTEM_PROMPT, controller.signal);
 
     if (advice && body.language === 'ja' && containsForbiddenJapaneseVocabulary(advice)) {
-      const repairPrompt = `${SYSTEM_PROMPT}\n\n# Rewrite requirement\nThe previous draft violated the Japanese vocabulary rules. Rewrite it from the same position data. Remove every conventional shogi term and every numbered 筋/段 reference. Preserve only observations that are directly supported by the position.`;
-      advice = await requestAdvice(
-        apiKey,
-        { position: modelInput, previousDraft: advice },
-        repairPrompt,
-        controller.signal,
-      );
+      const repairPrompt = `${SYSTEM_PROMPT}\nThe previous draft used forbidden shogi vocabulary. Rewrite it in SHOGI FRONTLINE military wording only, still at most two short sentences.`;
+      advice = await requestAdvice(apiKey, `${modelInput};rewrite=1`, repairPrompt, controller.signal);
     }
 
     if (!advice || (body.language === 'ja' && containsForbiddenJapaneseVocabulary(advice))) {
