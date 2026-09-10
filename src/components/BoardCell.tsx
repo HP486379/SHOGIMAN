@@ -1,6 +1,6 @@
 import { DisplayMode, Piece, EffectCell, Position, PieceType } from '../types/shogi';
 import { getBattlefieldUnitIcon } from '../assets/battlefieldUnitIcons';
-import { PIECE_KANJI } from '../utils/pieceLabels';
+import { getPieceKanji } from '../utils/pieceLabels';
 
 const UNIT_LABELS: Record<PieceType, string> = {
   pawn: 'INF',
@@ -39,6 +39,7 @@ export function BoardCell({ row, col, piece, isSelected, isLastMoveFrom, isLastM
   const checkedKingClass = isCheckedKing ? 'piece-check-target' : '';
   const promotedPieceClass = piece?.promoted ? 'piece-promoted' : '';
   const sideClass = piece?.player === 'white' ? 'unit-cpu' : 'unit-player';
+  const pieceKanji = piece ? getPieceKanji(piece.type, piece.promoted) : '';
 
   return (
     <div
@@ -67,10 +68,10 @@ export function BoardCell({ row, col, piece, isSelected, isLastMoveFrom, isLastM
         <div className={`piece unit-piece piece-mode-${displayMode} ${sideClass} ${selectedPieceClass} ${checkedKingClass} ${promotedPieceClass}`}>
           {displayMode !== 'shogi' && <img className="unit-icon" src={getBattlefieldUnitIcon(piece)} alt="" draggable={false} />}
           {displayMode === 'military' && <span className="unit-type-label">{UNIT_LABELS[piece.type]}</span>}
-          {displayMode === 'shogi' && <span className="unit-kanji-label" aria-hidden="true">{PIECE_KANJI[piece.type]}</span>}
+          {displayMode === 'shogi' && <span className="unit-kanji-label" aria-hidden="true">{pieceKanji}</span>}
           {displayMode === 'hybrid' && (
             <>
-              <span className="hybrid-kanji-label" aria-hidden="true">{PIECE_KANJI[piece.type]}</span>
+              <span className="hybrid-kanji-label" aria-hidden="true">{pieceKanji}</span>
               <span className="hybrid-code-label" aria-hidden="true">{UNIT_LABELS[piece.type]}</span>
             </>
           )}
