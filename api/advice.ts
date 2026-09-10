@@ -32,6 +32,11 @@ interface VercelResponse {
   end(): void;
 }
 
+interface AdvisorResult {
+  summary: string;
+  bullets: string[];
+}
+
 const PIECE_TYPES = new Set<PieceType>([
   'king', 'rook', 'bishop', 'gold', 'silver', 'knight', 'lance', 'pawn',
 ]);
@@ -41,13 +46,52 @@ const RATE_LIMIT = 30;
 const MIN_INTERVAL_MS = 700;
 const rateBuckets = new Map<string, { windowStart: number; count: number; lastAt: number }>();
 
-const SYSTEM_PROMPT = `You are the tactical advisor in SHOGI FRONTLINE, a standard-shogi game with a military visual theme.
+const UNIT_NAMES_JA: Record<PieceType, string> = {
+  king: '司令部',
+  rook: '戦車',
+  bishop: 'ロケット砲',
+  gold: '近衛兵',
+  silver: '特殊部隊',
+  knight: 'ドローン',
+  lance: '自走砲',
+  pawn: '歩兵',
+};
+
+const UNIT_NAMES_EN: Record<PieceType, string> = {
+  king: 'HQ',
+  rook: 'Tank',
+  bishop: 'Rocket Launcher',
+  gold: 'Guard',
+  silver: 'Special Forces',
+  knight: 'Drone',
+  lance: 'Artillery',
+  pawn: 'Infantry',
+};
+
+const SYSTEM_PROMPT = `# Role
+You are the tactical field advisor in SHOGI FRONTLINE. The rules are based on shogi, but your visible language must stay inside SHOGI FRONTLINE's military setting.
 Black = human 1P and starts from the bottom side. White = CPU and starts from the top side.
-Board coordinates are zero-based: row 0 is the CPU home side and row 8 is the 1P home side.
-Military names map to shogi pieces as follows: king=HQ/司令部, rook=Tank/戦車, bishop=Rocket Launcher/ロケット砲, gold=Guard/近衛兵, silver=Special Forces/特殊部隊, knight=Drone/ドローン, lance=Artillery/自走砲, pawn=Infantry/歩兵.
-Analyze only the supplied position. Give concise, useful advice from 1P's perspective. Prefer positional/tactical observations that are clearly supported by the board and captured pieces. Do not invent a check, capture, promotion, or exact legal move if you are not certain. Do not mention that you are an AI or discuss the API.
-If language is ja, write natural Japanese. If language is en, write natural English.
-The summary should be one short sentence. Return 2 to 4 short bullet points. No markdown.`;
+The board is a 9x9 nested array. Array row 0 is the CPU home side and row 8 is the 1P home side.
+
+# Response rules
+- Analyze only the supplied position and advise from 1P's perspective.
+- Ground every observation in the supplied board, reserve units, turn, and HQ attack status.
+- Do not invent a promotion/upgrade, capture, direct HQ attack, unit count, or exact legal move.
+- Do not claim a unit is upgraded unless its upgraded field is true.
+- Prefer broad tactical language such as left flank, center, right flank, frontline, home area, enemy area, attack route, retreat route, and reserve units.
+- Never use numbered shogi coordinates such as 7筋 or 1段目. Do not use 筋/段 notation at all.
+- The summary is one short sentence. Return 2 to 4 short bullet points. No markdown.
+
+# Japanese vocabulary rules
+When language=ja, use ONLY these unit names when referring to units:
+司令部 / 戦車 / ロケット砲 / 近衛兵 / 特殊部隊 / ドローン / 自走砲 / 歩兵.
+For an upgraded unit, say 強化戦車, 強化ロケット砲, 強化特殊部隊, 強化ドローン, 強化自走砲, or 強化歩兵 as appropriate.
+Do NOT use conventional shogi vocabulary in the visible answer. Forbidden examples include 王, 玉, 飛車, 角, 金, 銀, 桂, 香, 歩 by itself, と金, 馬, 龍, 竜, 成り, 王手, 玉頭, 駒, 持ち駒, and numbered 筋/段 notation.
+Say 司令部への直接攻撃 instead of 王手, and 予備戦力 instead of 持ち駒.
+Write natural Japanese with a military operations tone, not textbook shogi commentary.
+
+# English vocabulary rules
+When language=en, use only HQ, Tank, Rocket Launcher, Guard, Special Forces, Drone, Artillery, and Infantry for unit names. Prefer military positional language over traditional shogi jargon.`;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -116,6 +160,33 @@ function parseBody(body: unknown): unknown {
   }
 }
 
+function buildModelInput(body: AdvisorRequestBody): unknown {
+  const names = body.language === 'ja' ? UNIT_NAMES_JA : UNIT_NAMES_EN;
+  const sideName = (player: Player) => player === 'black' ? '1P' : 'CPU';
+  const attackStatus = body.checkPlayer === null
+    ? 'none'
+    : body.checkPlayer === 'black'
+      ? '1P_HQ_under_direct_attack'
+      : 'CPU_HQ_under_direct_attack';
+
+  return {
+    language: body.language,
+    perspective: '1P',
+    currentTurn: sideName(body.currentPlayer),
+    hqAttackStatus: attackStatus,
+    lastActionBy: body.lastMovePlayer ? sideName(body.lastMovePlayer) : 'none',
+    board: body.board.map(row => row.map(piece => piece ? {
+      side: sideName(piece.player),
+      unit: names[piece.type],
+      upgraded: Boolean(piece.promoted),
+    } : null)),
+    reserveUnits: {
+      '1P': body.hands.black.map(piece => names[piece]),
+      'CPU': body.hands.white.map(piece => names[piece]),
+    },
+  };
+}
+
 function extractOutputText(payload: unknown): string | null {
   if (!isRecord(payload)) return null;
   if (typeof payload.output_text === 'string') return payload.output_text;
@@ -132,7 +203,7 @@ function extractOutputText(payload: unknown): string | null {
   return null;
 }
 
-function sanitizeAdvice(value: unknown): { summary: string; bullets: string[] } | null {
+function sanitizeAdvice(value: unknown): AdvisorResult | null {
   if (!isRecord(value) || typeof value.summary !== 'string' || !Array.isArray(value.bullets)) return null;
   const summary = value.summary.trim().slice(0, 260);
   const bullets = value.bullets
@@ -142,6 +213,70 @@ function sanitizeAdvice(value: unknown): { summary: string; bullets: string[] } 
     .slice(0, 4);
   if (!summary || bullets.length === 0) return null;
   return { summary, bullets };
+}
+
+function containsForbiddenJapaneseVocabulary(advice: AdvisorResult): boolean {
+  const text = [advice.summary, ...advice.bullets].join('\n');
+  return /[王玉飛角金銀桂香馬竜龍駒]|歩(?!兵)|成り|[1-9一二三四五六七八九]筋|[1-9一二三四五六七八九]段(?:目)?/.test(text);
+}
+
+async function requestAdvice(
+  apiKey: string,
+  input: unknown,
+  instructions: string,
+  signal: AbortSignal,
+): Promise<AdvisorResult | null> {
+  const openAiResponse = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-5.4-mini',
+      store: false,
+      instructions,
+      input: JSON.stringify(input),
+      max_output_tokens: 320,
+      text: {
+        format: {
+          type: 'json_schema',
+          name: 'shogiman_advice',
+          strict: true,
+          schema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              summary: { type: 'string', minLength: 1, maxLength: 220 },
+              bullets: {
+                type: 'array',
+                minItems: 2,
+                maxItems: 4,
+                items: { type: 'string', minLength: 1, maxLength: 220 },
+              },
+            },
+            required: ['summary', 'bullets'],
+          },
+        },
+      },
+    }),
+    signal,
+  });
+
+  if (!openAiResponse.ok) {
+    console.error('OpenAI Responses API error:', openAiResponse.status);
+    return null;
+  }
+
+  const payload: unknown = await openAiResponse.json();
+  const outputText = extractOutputText(payload);
+  if (!outputText) return null;
+
+  try {
+    return sanitizeAdvice(JSON.parse(outputText) as unknown);
+  } catch {
+    return null;
+  }
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -190,67 +325,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const timeout = setTimeout(() => controller.abort(), 18_000);
 
   try {
-    const openAiResponse = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-5.4-mini',
-        store: false,
-        instructions: SYSTEM_PROMPT,
-        input: JSON.stringify(body),
-        max_output_tokens: 320,
-        text: {
-          format: {
-            type: 'json_schema',
-            name: 'shogiman_advice',
-            strict: true,
-            schema: {
-              type: 'object',
-              additionalProperties: false,
-              properties: {
-                summary: { type: 'string', minLength: 1, maxLength: 220 },
-                bullets: {
-                  type: 'array',
-                  minItems: 2,
-                  maxItems: 4,
-                  items: { type: 'string', minLength: 1, maxLength: 220 },
-                },
-              },
-              required: ['summary', 'bullets'],
-            },
-          },
-        },
-      }),
-      signal: controller.signal,
-    });
+    const modelInput = buildModelInput(body);
+    let advice = await requestAdvice(apiKey, modelInput, SYSTEM_PROMPT, controller.signal);
 
-    if (!openAiResponse.ok) {
-      console.error('OpenAI Responses API error:', openAiResponse.status);
-      res.status(502).json({ error: 'AI advisor is temporarily unavailable' });
-      return;
+    if (advice && body.language === 'ja' && containsForbiddenJapaneseVocabulary(advice)) {
+      const repairPrompt = `${SYSTEM_PROMPT}\n\n# Rewrite requirement\nThe previous draft violated the Japanese vocabulary rules. Rewrite it from the same position data. Remove every conventional shogi term and every numbered 筋/段 reference. Preserve only observations that are directly supported by the position.`;
+      advice = await requestAdvice(
+        apiKey,
+        { position: modelInput, previousDraft: advice },
+        repairPrompt,
+        controller.signal,
+      );
     }
 
-    const payload: unknown = await openAiResponse.json();
-    const outputText = extractOutputText(payload);
-    if (!outputText) {
-      res.status(502).json({ error: 'AI advisor returned no text' });
-      return;
-    }
-
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(outputText) as unknown;
-    } catch {
-      res.status(502).json({ error: 'AI advisor returned invalid JSON' });
-      return;
-    }
-
-    const advice = sanitizeAdvice(parsed);
-    if (!advice) {
-      res.status(502).json({ error: 'AI advisor returned invalid advice' });
+    if (!advice || (body.language === 'ja' && containsForbiddenJapaneseVocabulary(advice))) {
+      res.status(502).json({ error: 'AI advisor returned off-theme advice' });
       return;
     }
 
