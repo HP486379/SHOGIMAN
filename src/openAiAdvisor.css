@@ -86,6 +86,42 @@
   box-shadow: none;
 }
 
+.ai-advisor-incoming {
+  animation: ai-advisor-incoming-pulse 1.4s ease-out;
+}
+
+@keyframes ai-advisor-incoming-pulse {
+  0% {
+    box-shadow:
+      0 0 12px rgba(0, 180, 255, 0.45),
+      inset 0 0 18px rgba(0, 180, 255, 0.08);
+  }
+  18% {
+    box-shadow:
+      0 0 18px rgba(0, 240, 255, 0.95),
+      0 0 38px rgba(0, 220, 255, 0.72),
+      0 0 62px rgba(25, 217, 119, 0.34),
+      inset 0 0 22px rgba(0, 220, 255, 0.24);
+  }
+  48% {
+    box-shadow:
+      0 0 15px rgba(85, 255, 175, 0.82),
+      0 0 30px rgba(0, 220, 255, 0.46),
+      inset 0 0 18px rgba(85, 255, 175, 0.16);
+  }
+  100% {
+    box-shadow:
+      0 0 12px rgba(0, 180, 255, 0.45),
+      inset 0 0 18px rgba(0, 180, 255, 0.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-advisor-incoming {
+    animation: none;
+  }
+}
+
 @media (max-width: 620px) {
   .ai-advisor-source {
     font-size: 4px;

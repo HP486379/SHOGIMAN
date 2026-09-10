@@ -19,6 +19,7 @@ type AdvisorSource = 'idle' | 'loading' | 'openai' | 'error';
 type AutoEvent = Exclude<AdvisorTrigger, 'manual' | 'periodic' | 'multiple'>;
 
 const AUTO_INTERVAL_MOVES = 5;
+const INCOMING_PULSE_MS = 1400;
 const SCORE_RANK: Record<string, number> = {
   'CPU ADVANTAGE': -2,
   'CPU SLIGHT LEAD': -1,
@@ -69,6 +70,7 @@ export function AiAdvisor({
   );
   const [remoteAdvice, setRemoteAdvice] = useState<OpenAiAdvice | null>(null);
   const [source, setSource] = useState<AdvisorSource>('idle');
+  const [incomingPulse, setIncomingPulse] = useState(false);
   const previousBoardRef = useRef<BoardGrid>(board);
   const previousHandsRef = useRef<HandPieces>(hands);
   const previousCheckRef = useRef<Player | null>(checkPlayer);
@@ -77,6 +79,26 @@ export function AiAdvisor({
   const pendingEventsRef = useRef<Set<AutoEvent>>(new Set());
   const lastAdviceMoveRef = useRef(0);
   const requestControllerRef = useRef<AbortController | null>(null);
+  const pulseTimerRef = useRef<number | null>(null);
+
+  const stopIncomingPulse = useCallback(() => {
+    if (pulseTimerRef.current !== null) {
+      window.clearTimeout(pulseTimerRef.current);
+      pulseTimerRef.current = null;
+    }
+    setIncomingPulse(false);
+  }, []);
+
+  const startIncomingPulse = useCallback(() => {
+    if (pulseTimerRef.current !== null) {
+      window.clearTimeout(pulseTimerRef.current);
+    }
+    setIncomingPulse(true);
+    pulseTimerRef.current = window.setTimeout(() => {
+      setIncomingPulse(false);
+      pulseTimerRef.current = null;
+    }, INCOMING_PULSE_MS);
+  }, []);
 
   const runAnalysis = useCallback((trigger: AdvisorTrigger) => {
     if (currentPlayer !== 'black' || promotionPending) return;
@@ -95,12 +117,15 @@ export function AiAdvisor({
         if (controller.signal.aborted) return;
         setRemoteAdvice(advice);
         setSource('openai');
+        if (trigger !== 'manual') {
+          startIncomingPulse();
+        }
       })
       .catch(error => {
         if (controller.signal.aborted || (error instanceof DOMException && error.name === 'AbortError')) return;
         setSource('error');
       });
-  }, [board, hands, currentPlayer, checkPlayer, lastMovePlayer, language, moveCount, promotionPending]);
+  }, [board, hands, currentPlayer, checkPlayer, lastMovePlayer, language, moveCount, promotionPending, startIncomingPulse]);
 
   useEffect(() => {
     const previousMoveCount = previousMoveCountRef.current;
@@ -112,6 +137,7 @@ export function AiAdvisor({
       lastAdviceMoveRef.current = 0;
       setRemoteAdvice(null);
       setSource('idle');
+      stopIncomingPulse();
       previousBoardRef.current = board;
       previousHandsRef.current = hands;
       previousCheckRef.current = checkPlayer;
@@ -158,15 +184,21 @@ export function AiAdvisor({
     pendingEventsRef.current.clear();
     const timer = window.setTimeout(() => runAnalysis(trigger), 220);
     return () => window.clearTimeout(timer);
-  }, [board, hands, currentPlayer, checkPlayer, localAdvice.scoreLabel, moveCount, promotionPending, runAnalysis]);
+  }, [board, hands, currentPlayer, checkPlayer, localAdvice.scoreLabel, moveCount, promotionPending, runAnalysis, stopIncomingPulse]);
 
   useEffect(() => {
     requestControllerRef.current?.abort();
     setRemoteAdvice(null);
     setSource('idle');
-  }, [language]);
+    stopIncomingPulse();
+  }, [language, stopIncomingPulse]);
 
-  useEffect(() => () => requestControllerRef.current?.abort(), []);
+  useEffect(() => () => {
+    requestControllerRef.current?.abort();
+    if (pulseTimerRef.current !== null) {
+      window.clearTimeout(pulseTimerRef.current);
+    }
+  }, []);
 
   const sourceLabel = source === 'openai'
     ? 'GPT-5.4 MINI'
@@ -190,7 +222,7 @@ export function AiAdvisor({
     : 'AI analysis failed. Use ANALYZE to try again.';
 
   return (
-    <section className={`ai-advisor ${checkPlayer ? 'ai-advisor-alert' : ''}`}>
+    <section className={`ai-advisor ${checkPlayer ? 'ai-advisor-alert' : ''} ${incomingPulse ? 'ai-advisor-incoming' : ''}`}>
       <div className="ai-advisor-header">
         <span className="ai-advisor-title">{localAdvice.title}</span>
         <div className="ai-advisor-actions">
