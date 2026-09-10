@@ -10,6 +10,7 @@ interface AiAdvisorProps {
   checkPlayer: Player | null;
   lastMovePlayer: Player | null;
   moveCount: number;
+  promotionPending: boolean;
   language: AdvisorLanguage;
   onLanguageChange: (language: AdvisorLanguage) => void;
 }
@@ -58,6 +59,7 @@ export function AiAdvisor({
   checkPlayer,
   lastMovePlayer,
   moveCount,
+  promotionPending,
   language,
   onLanguageChange,
 }: AiAdvisorProps) {
@@ -77,7 +79,7 @@ export function AiAdvisor({
   const requestControllerRef = useRef<AbortController | null>(null);
 
   const runAnalysis = useCallback((trigger: AdvisorTrigger) => {
-    if (currentPlayer !== 'black') return;
+    if (currentPlayer !== 'black' || promotionPending) return;
 
     requestControllerRef.current?.abort();
     const controller = new AbortController();
@@ -98,17 +100,27 @@ export function AiAdvisor({
         if (controller.signal.aborted || (error instanceof DOMException && error.name === 'AbortError')) return;
         setSource('error');
       });
-  }, [board, hands, currentPlayer, checkPlayer, lastMovePlayer, language, moveCount]);
+  }, [board, hands, currentPlayer, checkPlayer, lastMovePlayer, language, moveCount, promotionPending]);
 
   useEffect(() => {
-    if (moveCount < previousMoveCountRef.current || moveCount === 0) {
+    const previousMoveCount = previousMoveCountRef.current;
+    const didReset = moveCount < previousMoveCount || (moveCount === 0 && previousMoveCount !== 0);
+
+    if (didReset) {
+      requestControllerRef.current?.abort();
       pendingEventsRef.current.clear();
       lastAdviceMoveRef.current = 0;
       setRemoteAdvice(null);
       setSource('idle');
+      previousBoardRef.current = board;
+      previousHandsRef.current = hands;
+      previousCheckRef.current = checkPlayer;
+      previousScoreRef.current = localAdvice.scoreLabel;
+      previousMoveCountRef.current = moveCount;
+      return;
     }
 
-    if (moveCount !== previousMoveCountRef.current) {
+    if (moveCount !== previousMoveCount) {
       requestControllerRef.current?.abort();
       setRemoteAdvice(null);
       setSource('idle');
@@ -129,15 +141,15 @@ export function AiAdvisor({
       if (scoreShiftedSignificantly(previousScoreRef.current, localAdvice.scoreLabel)) {
         pendingEventsRef.current.add('evaluation_swing');
       }
+
+      previousBoardRef.current = board;
+      previousHandsRef.current = hands;
+      previousCheckRef.current = checkPlayer;
+      previousScoreRef.current = localAdvice.scoreLabel;
+      previousMoveCountRef.current = moveCount;
     }
 
-    previousBoardRef.current = board;
-    previousHandsRef.current = hands;
-    previousCheckRef.current = checkPlayer;
-    previousScoreRef.current = localAdvice.scoreLabel;
-    previousMoveCountRef.current = moveCount;
-
-    if (currentPlayer !== 'black' || moveCount === 0) return;
+    if (currentPlayer !== 'black' || promotionPending || moveCount === 0) return;
 
     const periodic = moveCount - lastAdviceMoveRef.current >= AUTO_INTERVAL_MOVES;
     const trigger = chooseTrigger(pendingEventsRef.current, periodic);
@@ -146,7 +158,7 @@ export function AiAdvisor({
     pendingEventsRef.current.clear();
     const timer = window.setTimeout(() => runAnalysis(trigger), 220);
     return () => window.clearTimeout(timer);
-  }, [board, hands, currentPlayer, checkPlayer, localAdvice.scoreLabel, moveCount, runAnalysis]);
+  }, [board, hands, currentPlayer, checkPlayer, localAdvice.scoreLabel, moveCount, promotionPending, runAnalysis]);
 
   useEffect(() => {
     requestControllerRef.current?.abort();
@@ -170,6 +182,9 @@ export function AiAdvisor({
   const waitingText = language === 'ja'
     ? 'CPU行動中。分析は1Pの手番で実行できます。'
     : 'CPU is moving. Analysis is available on 1P turn.';
+  const promotionText = language === 'ja'
+    ? '成るかどうかを決めた後に局面を分析します。'
+    : 'Choose whether to upgrade before analyzing the position.';
   const errorText = language === 'ja'
     ? 'AI分析に失敗しました。必要ならANALYZEでもう一度実行できます。'
     : 'AI analysis failed. Use ANALYZE to try again.';
@@ -205,7 +220,15 @@ export function AiAdvisor({
         </div>
       ) : (
         <p className={`ai-advisor-idle ${source === 'error' ? 'ai-advisor-idle-error' : ''}`}>
-          {source === 'loading' ? (language === 'ja' ? '局面を分析中…' : 'Analyzing position…') : source === 'error' ? errorText : currentPlayer === 'black' ? idleText : waitingText}
+          {source === 'loading'
+            ? (language === 'ja' ? '局面を分析中…' : 'Analyzing position…')
+            : source === 'error'
+              ? errorText
+              : promotionPending
+                ? promotionText
+                : currentPlayer === 'black'
+                  ? idleText
+                  : waitingText}
         </p>
       )}
 
@@ -213,7 +236,7 @@ export function AiAdvisor({
         type="button"
         className="ai-analyze-btn"
         onClick={() => runAnalysis('manual')}
-        disabled={currentPlayer !== 'black' || source === 'loading'}
+        disabled={currentPlayer !== 'black' || promotionPending || source === 'loading'}
       >
         {source === 'loading' ? 'ANALYZING...' : 'ANALYZE'}
       </button>
