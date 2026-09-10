@@ -177,6 +177,8 @@ function App() {
             currentPlayer={state.currentPlayer}
             checkPlayer={state.checkPlayer}
             lastMovePlayer={state.lastMove?.player ?? null}
+            moveCount={state.moveCount}
+            promotionPending={Boolean(state.pendingPromotion)}
             language={advisorLanguage}
             onLanguageChange={setAdvisorLanguage}
           />
