@@ -19,6 +19,7 @@ SHOGIMAN は、通常の将棋にゲーム的な視覚演出を加えたブラ�
 - CPU レベルを EASY / NORMAL / HARD から選択可能
 - ファミコン風のUI、走査線、レトロゲーム風演出
 - SE ON/OFF と RESET ボタンを表示
+- AI ADVISOR は OpenAI API (`gpt-5.4-mini`) を利用し、失敗時はローカル解析へフォールバック
 
 ## CPU レベル
 
@@ -33,12 +34,26 @@ SHOGIMAN は、通常の将棋にゲーム的な視覚演出を加えたブラ�
 - Vite
 - Tailwind CSS
 - ESLint
+- Vercel Functions
+- OpenAI Responses API
 
 ## セットアップ
 
 ```bash
 npm install
 ```
+
+### OpenAI AI ADVISOR
+
+AI ADVISOR の OpenAI API 呼び出しはブラウザから直接行わず、`/api/advice` の Vercel Function を経由します。APIキーをクライアント側の `VITE_*` 変数に入れないでください。
+
+Vercel の Project Settings → Environment Variables に次を登録します。
+
+```text
+OPENAI_API_KEY=your_api_key
+```
+
+Production と Preview の両方で AI ADVISOR を確認する場合は、両環境でこの変数を有効にしてください。未設定・APIエラー・レート制限時には既存のローカル解析コメントが表示されます。
 
 ## 開発サーバー起動
 
@@ -47,6 +62,8 @@ npm run dev
 ```
 
 起動後、表示されたローカルURLをブラウザで開いてください。
+
+Vercel Function も含めてローカル確認する場合は Vercel の開発環境を利用してください。
 
 ## ビルド
 
@@ -75,6 +92,8 @@ npm run lint
 ## ディレクトリ構成
 
 ```text
+api/
+└─ advice.ts
 src/
 ├─ components/
 │  ├─ Board.tsx
@@ -88,7 +107,8 @@ src/
 ├─ utils/
 │  ├─ cpuPlayer.ts
 │  ├─ initialBoard.ts
-│  └─ moveRules.ts
+│  ├─ moveRules.ts
+│  └─ openAiAdvisor.ts
 ├─ App.tsx
 ├─ index.css
 └─ main.tsx
@@ -102,15 +122,10 @@ src/
 
 ## 今後の改善候補
 
-- 成りの実装
-- 持ち駒の実装
-- 王手・詰み判定
 - CPU思考ロジックの強化
-- 効果音の実装
 - スマホ表示の最適化
 - ファミコン風グラフィックの強化
-- タイトル画面・ゲーム開始演出
-- 対局結果表示
+- AI ADVISOR の局面説明精度改善
 
 ## ライセンス
 

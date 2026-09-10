@@ -1,0 +1,36 @@
+.ai-advisor-source {
+  flex: 0 0 auto;
+  padding: 4px 6px;
+  border: 1px solid #157da0;
+  border-radius: 3px;
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  font-size: 5px;
+  line-height: 1;
+  color: #76dfff;
+  background: rgba(0, 22, 38, 0.9);
+  white-space: nowrap;
+}
+
+.ai-advisor-source-openai {
+  color: #55ffaf;
+  border-color: #19d977;
+  background: rgba(0, 38, 20, 0.92);
+  box-shadow: 0 0 7px rgba(36, 255, 143, 0.28);
+}
+
+.ai-advisor-source-loading {
+  color: #ffee55;
+  border-color: #b9a92f;
+}
+
+.ai-advisor-source-error {
+  color: #ff9f7a;
+  border-color: #c45b39;
+}
+
+@media (max-width: 620px) {
+  .ai-advisor-source {
+    font-size: 4px;
+    padding: 3px 4px;
+  }
+}
