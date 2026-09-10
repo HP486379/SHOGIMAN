@@ -1,6 +1,15 @@
 import { BoardGrid, HandPieces, Player } from '../types/shogi';
 import { AdvisorLanguage } from './aiAdvisor';
 
+export type AdvisorTrigger =
+  | 'manual'
+  | 'capture'
+  | 'promotion'
+  | 'hq_attack'
+  | 'evaluation_swing'
+  | 'periodic'
+  | 'multiple';
+
 export interface OpenAiAdvice {
   summary: string;
   bullets: string[];
@@ -14,6 +23,7 @@ interface OpenAiAdviceRequest {
   checkPlayer: Player | null;
   lastMovePlayer: Player | null;
   language: AdvisorLanguage;
+  trigger: AdvisorTrigger;
 }
 
 const CACHE_LIMIT = 24;
@@ -37,7 +47,7 @@ function isAdvice(value: unknown): value is OpenAiAdvice {
   return (
     typeof candidate.summary === 'string' &&
     Array.isArray(candidate.bullets) &&
-    candidate.bullets.length > 0 &&
+    candidate.bullets.length <= 1 &&
     candidate.bullets.every(item => typeof item === 'string') &&
     typeof candidate.model === 'string'
   );
@@ -69,7 +79,7 @@ export async function requestOpenAiAdvice(
 
   const advice: OpenAiAdvice = {
     summary: payload.summary,
-    bullets: payload.bullets.slice(0, 4),
+    bullets: payload.bullets.slice(0, 1),
     model: payload.model,
   };
   remember(key, advice);
