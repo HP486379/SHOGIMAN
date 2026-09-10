@@ -52,13 +52,16 @@
 
 .ai-advisor-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
   gap: 10px;
+  min-width: 0;
   margin-bottom: 12px;
 }
 
 .ai-advisor-title {
+  display: block;
+  min-width: 0;
   font-family: 'Press Start 2P', 'Courier New', monospace;
   font-size: 11px;
   line-height: 1.55;
@@ -74,8 +77,10 @@
 .ai-advisor-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 5px;
-  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
 }
 
 .ai-lang-btn {
@@ -100,11 +105,15 @@
 
 .ai-advisor-score {
   flex: 0 0 auto;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 5px 7px;
   border: 1px solid #ffee55;
   border-radius: 3px;
   font-family: 'Press Start 2P', 'Courier New', monospace;
   font-size: 7px;
+  line-height: 1;
+  white-space: nowrap;
   color: #ffee55;
   background: rgba(30, 24, 0, 0.82);
   text-shadow: 0 0 6px rgba(255, 220, 0, 0.8);
